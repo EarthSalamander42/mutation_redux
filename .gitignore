@@ -8,13 +8,13 @@
 content/*
 !content/dota_addons/
 content/dota_addons/*
-!content/dota_addons/mutation_redux/
+!content/dota_addons/mutation/
 
 !game/
 game/*
 !game/dota_addons/
 game/dota_addons/*
-!game/dota_addons/mutation_redux/
+!game/dota_addons/mutation/
 
 # Cache crap that Valve autogenerates
 *.bin
@@ -45,9 +45,9 @@ resource/overviews/*
 #Github dump
 *.stackdump
 
-game/dota_addons/mutation_redux/rich_presence_persistent_data\.txt
+game/dota_addons/mutation/rich_presence_persistent_data\.txt
 
-game/dota_addons/mutation_redux/server_log\.txt
+game/dota_addons/mutation/server_log\.txt
 
 # eclipse
 .project
