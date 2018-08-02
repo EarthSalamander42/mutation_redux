@@ -1,8 +1,6 @@
 -- Author: Shush
 -- Date: 2/5/2017
 
-CreateEmptyTalents("techies")
-
 ------------------------------
 --     HELPER FUNCTIONS     --
 ------------------------------

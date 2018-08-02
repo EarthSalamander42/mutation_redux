@@ -58,8 +58,8 @@ if IsServer() then
 		end
 	end
 
-	function modifier_mutation_shadow_dance:OnAttacked(kv)
-		if self:GetParent()	== kv.target then
+	function modifier_mutation_shadow_dance:OnAttackLanded(kv)
+		if self:GetParent()	== kv.attacker then
 			modifier_mutation_shadow_dance:ResetCheck(self:GetParent())
 		end
 	end
