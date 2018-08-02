@@ -1,16 +1,5 @@
 -- This file contains all barebones-registered events and has already set up the passed-in parameters for your use.
 
--- Cleanup a player when they leave
-function Mutation:OnDisconnect(keys)
-	DebugPrint('[BAREBONES] Player Disconnected ' .. tostring(keys.userid))
-	DebugPrintTable(keys)
-
-	local name = keys.name
-	local networkid = keys.networkid
-	local reason = keys.reason
-	local userid = keys.userid
-
-end
 -- The overall game state has changed
 function Mutation:OnGameRulesStateChange(keys)
 	DebugPrint("[BAREBONES] GameRules State Changed")
@@ -32,8 +21,8 @@ function Mutation:OnGameRulesStateChange(keys)
 		elseif IMBA_MUTATION["terrain"] == "omni_vision" then
 			Mutation:RevealAllMap()
 		elseif IMBA_MUTATION["terrain"] == "fast_runes" then
-			RUNE_SPAWN_TIME = 30.0
-			BOUNTY_RUNE_SPAWN_TIME = 60.0
+			GameRules:GetGameModeEntity():SetPowerRuneSpawnInterval(30.0)
+			GameRules:GetGameModeEntity():SetBountyRuneSpawnInterval(30.0)
 		end
 
 		Timers:CreateTimer(3.0, function()
@@ -143,6 +132,80 @@ function Mutation:OnNPCSpawned(keys)
 	end
 end
 
+-- An entity died
+function Mutation:OnEntityKilled( keys )
+	DebugPrint( '[BAREBONES] OnEntityKilled Called' )
+	DebugPrintTable( keys )
+	
+
+	-- The Unit that was Killed
+	local killedUnit = EntIndexToHScript( keys.entindex_killed )
+	-- The Killing entity
+	local killerEntity = nil
+
+	if keys.entindex_attacker ~= nil then
+		killerEntity = EntIndexToHScript( keys.entindex_attacker )
+	end
+
+	-- The ability/item used to kill, or nil if not killed by an item/ability
+	local killerAbility = nil
+
+	if keys.entindex_inflictor ~= nil then
+		killerAbility = EntIndexToHScript( keys.entindex_inflictor )
+	end
+
+	local damagebits = keys.damagebits -- This might always be 0 and therefore useless
+
+	-- Put code here to handle when an entity gets killed
+	if killedUnit:IsRealHero() then
+		Mutation:OnHeroDeath(killedUnit)
+	end
+end
+
+function Mutation:OnHeroSpawn(hero)
+--	print("Mutation: On Hero Spawn")
+
+	if IMBA_MUTATION["positive"] == "damage_reduction" then
+		hero:AddNewModifier(hero, nil, "modifier_mutation_damage_reduction", {})
+	elseif IMBA_MUTATION["positive"] == "slark_mode" then
+		hero:AddNewModifier(hero, nil, "modifier_mutation_shadow_dance", {})
+	end
+
+	if IMBA_MUTATION["terrain"] == "sleepy_river" then
+		hero:AddNewModifier(hero, nil, "modifier_river", {})
+	end
+end
+
+function Mutation:OnHeroDeath(hero)
+--	print("Mutation: On Hero Dead")
+
+	if IMBA_MUTATION["positive"] == "teammate_resurrection" then
+		local newItem = CreateItem("item_tombstone", hero, hero)
+		newItem:SetPurchaseTime(0)
+		newItem:SetPurchaser(hero)
+
+		local tombstone = SpawnEntityFromTableSynchronous("dota_item_tombstone_drop", {})
+		tombstone:SetContainedItem(newItem)
+		tombstone:SetAngles(0, RandomFloat(0, 360), 0)
+		FindClearSpaceForUnit(tombstone, hero:GetAbsOrigin(), true)
+	end
+
+	if IMBA_MUTATION["negative"] == "death_gold_drop" then
+		local game_time = math.min(GameRules:GetDOTATime(false, false) / 60, 30)
+		local random_int = RandomInt(30, 60)
+		local newItem = CreateItem("item_bag_of_gold", nil, nil)
+		newItem:SetPurchaseTime(0)
+		print("Bag of Gold:", game_time, random_int, random_int * game_time)
+		newItem:SetCurrentCharges(random_int * game_time + 100)
+
+		local drop = CreateItemOnPositionSync(hero:GetAbsOrigin(), newItem)
+		local dropTarget = hero:GetAbsOrigin() + RandomVector(RandomFloat( 50, 150 ))
+		newItem:LaunchLoot(true, 300, 0.75, dropTarget)
+		EmitSoundOn("Dungeon.TreasureItemDrop", hero)
+	end
+end
+
+--[[
 -- An item was picked up off the ground
 function Mutation:OnItemPickedUp(keys)
 	DebugPrint( '[BAREBONES] OnItemPickedUp' )
@@ -266,19 +329,18 @@ function Mutation:OnRuneActivated (keys)
 	local player = PlayerResource:GetPlayer(keys.PlayerID)
 	local rune = keys.rune
 
-	--[[ Rune Can be one of the following types
-	DOTA_RUNE_DOUBLEDAMAGE
-	DOTA_RUNE_HASTE
-	DOTA_RUNE_HAUNTED
-	DOTA_RUNE_ILLUSION
-	DOTA_RUNE_INVISIBILITY
-	DOTA_RUNE_BOUNTY
-	DOTA_RUNE_MYSTERY
-	DOTA_RUNE_RAPIER
-	DOTA_RUNE_REGENERATION
-	DOTA_RUNE_SPOOKY
-	DOTA_RUNE_TURBO
-	]]
+	-- Rune Can be one of the following types
+--	DOTA_RUNE_DOUBLEDAMAGE
+--	DOTA_RUNE_HASTE
+--	DOTA_RUNE_HAUNTED
+--	DOTA_RUNE_ILLUSION
+--	DOTA_RUNE_INVISIBILITY
+--	DOTA_RUNE_BOUNTY
+--	DOTA_RUNE_MYSTERY
+--	DOTA_RUNE_RAPIER
+--	DOTA_RUNE_REGENERATION
+--	DOTA_RUNE_SPOOKY
+--	DOTA_RUNE_TURBO
 end
 
 -- A player took damage from a tower
@@ -309,36 +371,6 @@ function Mutation:OnTeamKillCredit(keys)
 	local victimPlayer = PlayerResource:GetPlayer(keys.victim_userid)
 	local numKills = keys.herokills
 	local killerTeamNumber = keys.teamnumber
-end
-
--- An entity died
-function Mutation:OnEntityKilled( keys )
-	DebugPrint( '[BAREBONES] OnEntityKilled Called' )
-	DebugPrintTable( keys )
-	
-
-	-- The Unit that was Killed
-	local killedUnit = EntIndexToHScript( keys.entindex_killed )
-	-- The Killing entity
-	local killerEntity = nil
-
-	if keys.entindex_attacker ~= nil then
-		killerEntity = EntIndexToHScript( keys.entindex_attacker )
-	end
-
-	-- The ability/item used to kill, or nil if not killed by an item/ability
-	local killerAbility = nil
-
-	if keys.entindex_inflictor ~= nil then
-		killerAbility = EntIndexToHScript( keys.entindex_inflictor )
-	end
-
-	local damagebits = keys.damagebits -- This might always be 0 and therefore useless
-
-	-- Put code here to handle when an entity gets killed
-	if killedUnit:IsRealHero() then
-		Mutation:OnHeroDeath(killedUnit)
-	end
 end
 
 -- This function is called 1 to 2 times as the player connects initially but before they 
@@ -434,45 +466,15 @@ function Mutation:OnPlayerChat(keys)
 	local text = keys.text
 end
 
-function Mutation:OnHeroSpawn(hero)
---	print("Mutation: On Hero Spawn")
+-- Cleanup a player when they leave
+function Mutation:OnDisconnect(keys)
+	DebugPrint('[BAREBONES] Player Disconnected ' .. tostring(keys.userid))
+	DebugPrintTable(keys)
 
-	if IMBA_MUTATION["positive"] == "damage_reduction" then
-		hero:AddNewModifier(hero, nil, "modifier_mutation_damage_reduction", {})
-	elseif IMBA_MUTATION["positive"] == "slark_mode" then
-		hero:AddNewModifier(hero, nil, "modifier_mutation_shadow_dance", {})
-	end
+	local name = keys.name
+	local networkid = keys.networkid
+	local reason = keys.reason
+	local userid = keys.userid
 
-	if IMBA_MUTATION["terrain"] == "sleepy_river" then
-		hero:AddNewModifier(hero, nil, "modifier_river", {})
-	end
 end
-
-function Mutation:OnHeroDeath(hero)
---	print("Mutation: On Hero Dead")
-
-	if IMBA_MUTATION["positive"] == "teammate_resurrection" then
-		local newItem = CreateItem("item_tombstone", hero, hero)
-		newItem:SetPurchaseTime(0)
-		newItem:SetPurchaser(hero)
-
-		local tombstone = SpawnEntityFromTableSynchronous("dota_item_tombstone_drop", {})
-		tombstone:SetContainedItem(newItem)
-		tombstone:SetAngles(0, RandomFloat(0, 360), 0)
-		FindClearSpaceForUnit(tombstone, hero:GetAbsOrigin(), true)
-	end
-
-	if IMBA_MUTATION["negative"] == "death_gold_drop" then
-		local game_time = math.min(GameRules:GetDOTATime(false, false) / 60, 30)
-		local random_int = RandomInt(30, 60)
-		local newItem = CreateItem("item_bag_of_gold", nil, nil)
-		newItem:SetPurchaseTime(0)
-		print("Bag of Gold:", game_time, random_int, random_int * game_time)
-		newItem:SetCurrentCharges(random_int * game_time + 100)
-
-		local drop = CreateItemOnPositionSync(hero:GetAbsOrigin(), newItem)
-		local dropTarget = hero:GetAbsOrigin() + RandomVector(RandomFloat( 50, 150 ))
-		newItem:LaunchLoot(true, 300, 0.75, dropTarget)
-		EmitSoundOn("Dungeon.TreasureItemDrop", hero)
-	end
-end
+--]]
