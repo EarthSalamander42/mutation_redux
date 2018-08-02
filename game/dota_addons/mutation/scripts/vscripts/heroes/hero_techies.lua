@@ -5,46 +5,6 @@
 --     HELPER FUNCTIONS     --
 ------------------------------
 
-local function ApplyInflammableToRemoteMines(caster, range, remote_mines)
-
-	if not remote_mines then
-		-- Find Remote Mines in the explosion radius
-		remote_mines = FindUnitsInRadius(caster:GetTeamNumber(),
-										caster:GetAbsOrigin(),
-										nil,
-										range,
-										DOTA_UNIT_TARGET_TEAM_FRIENDLY,
-										DOTA_UNIT_TARGET_OTHER,
-										DOTA_UNIT_TARGET_FLAG_NONE,
-										FIND_ANY_ORDER,
-										false)
-	end
-
-	local modifier_inflammable = "modifier_imba_remote_mine_inflammable"
-	local detonate_ability = "imba_techies_remote_mine_pinpoint_detonation"
-
-	-- Give them inflammable stacks
-	for _,remote_mine in pairs(remote_mines) do
-		if remote_mine:GetUnitName() == "npc_imba_techies_remote_mine" then
-
-			local modifier_inflammable_handler = remote_mine:FindModifierByName(modifier_inflammable)
-			if not modifier_inflammable_handler then
-				local detonate_ability_handler = remote_mine:FindAbilityByName(detonate_ability)
-				if detonate_ability_handler then
-					local inflammable_duration = detonate_ability_handler:GetSpecialValueFor("inflammable_duration")
-					modifier_inflammable_handler = remote_mine:AddNewModifier(caster, detonate_ability_handler, modifier_inflammable, {duration = inflammable_duration})
-				end
-			end
-
-			-- Nil Check
-			if modifier_inflammable_handler then
-				modifier_inflammable_handler:IncrementStackCount()
-				modifier_inflammable_handler:ForceRefresh()
-			end
-		end
-	end
-end
-
 local function RefreshElectroCharge(unit)
 	local modifier_electrocharge = "modifier_imba_statis_trap_electrocharge"
 
@@ -56,17 +16,11 @@ local function RefreshElectroCharge(unit)
 	end
 end
 
-local function PlantProximityMine(caster, ability, spawn_point, big_boom)
+local function PlantProximityMine(caster, ability, spawn_point)
 	local mine_ability = "imba_techies_proximity_mine_trigger"
 
 	-- Create the mine unit
-	local mine_name
-	if big_boom then
-		mine_name = "npc_imba_techies_proximity_mine_big_boom"
-	else
-		mine_name = "npc_imba_techies_proximity_mine"
-	end
-
+	local mine_name = "npc_imba_techies_proximity_mine"
 	local mine = CreateUnitByName(mine_name, spawn_point, true, caster, caster, caster:GetTeamNumber())
 
 	mine:AddRangeIndicator(caster, nil, nil, ability:GetAOERadius(), 150, 22, 22, false, false, false)
@@ -137,29 +91,27 @@ function imba_techies_proximity_mine:CastFilterResultLocation(location)
 		local mine_distance = ability:GetSpecialValueFor("mine_distance")
 		local trigger_range = ability:GetSpecialValueFor("trigger_range")
 
-		-- #1 Talent: Trigger range increase
-		trigger_range = trigger_range + caster:FindTalentValue("special_bonus_imba_techies_1")
-
 		-- Radius
 		local radius = mine_distance + trigger_range
 
 		-- Look for nearby mines
 		local friendly_units = FindUnitsInRadius(caster:GetTeamNumber(),
-												location,
-												nil,
-												radius,
-												DOTA_UNIT_TARGET_TEAM_FRIENDLY,
-												DOTA_UNIT_TARGET_OTHER,
-												DOTA_UNIT_TARGET_FLAG_NONE,
-												FIND_ANY_ORDER,
-												false)
+			location,
+			nil,
+			radius,
+			DOTA_UNIT_TARGET_TEAM_FRIENDLY,
+			DOTA_UNIT_TARGET_OTHER,
+			DOTA_UNIT_TARGET_FLAG_NONE,
+			FIND_ANY_ORDER,
+			false
+		)
 
 		local mine_found = false
 
 		-- Search and see if mines were found
 		for _,unit in pairs(friendly_units) do
 			local unitName = unit:GetUnitName()
-			if unitName == "npc_imba_techies_proximity_mine" or unitName == "npc_imba_techies_proximity_mine_big_boom" then
+			if unitName == "npc_imba_techies_proximity_mine" then
 				mine_found = true
 				break
 			end
@@ -183,9 +135,6 @@ function imba_techies_proximity_mine:GetAOERadius()
 
 	local trigger_range = ability:GetSpecialValueFor("trigger_range")
 	local mine_distance = ability:GetSpecialValueFor("mine_distance")
-
-	-- #1 Talent: Trigger range increase
-	trigger_range = trigger_range + caster:FindTalentValue("special_bonus_imba_techies_1")
 
 	return trigger_range + mine_distance
 end
@@ -224,15 +173,7 @@ function imba_techies_proximity_mine:OnSpellStart()
 	-- Determine mine locations, depending on mine count
 	local direction = (target_point - caster:GetAbsOrigin()):Normalized()
 
-	-- Always plant the initial mine in the target point. Big boom if appropriate
-	local big_boom = false
-
-	-- #7 Talent: Proximity Mines initial mine is a Big Boom
-	if caster:HasTalent("special_bonus_imba_techies_7") then
-		big_boom = true
-	end
-
-	PlantProximityMine(caster, ability, target_point, big_boom)
+	PlantProximityMine(caster, ability, target_point)
 
 	-- Rotate the locations and find the additional mine spots
 	if mine_placement_count > 0 then
@@ -339,7 +280,6 @@ end
 imba_techies_proximity_mine_trigger = imba_techies_proximity_mine_trigger or class({})
 LinkLuaModifier("modifier_imba_proximity_mine", "heroes/hero_techies.lua", LUA_MODIFIER_MOTION_NONE)
 LinkLuaModifier("modifier_imba_proximity_mine_building_res", "heroes/hero_techies.lua", LUA_MODIFIER_MOTION_NONE)
-LinkLuaModifier("modifier_imba_proximity_mine_talent", "heroes/hero_techies.lua", LUA_MODIFIER_MOTION_NONE)
 
 function imba_techies_proximity_mine_trigger:GetIntrinsicModifierName()
 	return "modifier_imba_proximity_mine"
@@ -370,11 +310,6 @@ function modifier_imba_proximity_mine:OnCreated()
 		self.tick_interval = self.ability:GetSpecialValueFor("tick_interval")
 		self.fow_radius = self.ability:GetSpecialValueFor("fow_radius")
 		self.fow_duration = self.ability:GetSpecialValueFor("fow_duration")
-		self.big_boom_mine_bonus_dmg = self.ability:GetSpecialValueFor("big_boom_mine_bonus_dmg")
-		self.big_boom_shrapnel_duration = self.ability:GetSpecialValueFor("big_boom_shrapnel_duration")
-
-		-- #1 Talent: Trigger range increase
-		self.trigger_range = self.trigger_range + self.caster:FindTalentValue("special_bonus_imba_techies_1")
 
 		-- Add mine particle effect
 		local particle_mine = "particles/units/heroes/hero_techies/techies_land_mine.vpcf"
@@ -389,12 +324,6 @@ function modifier_imba_proximity_mine:OnCreated()
 		self.trigger_time = 0
 
 		if IsServer() then
-
-			-- Determine if this is a Big Boom
-			if self.caster:GetUnitName() == "npc_imba_techies_proximity_mine_big_boom" then
-				self.is_big_boom = true
-			end
-
 			-- Wait for the mine to activate
 			Timers:CreateTimer(self.activation_delay, function()
 				-- Mark mine as active
@@ -521,25 +450,12 @@ function modifier_imba_proximity_mine:_Explode()
 										FIND_ANY_ORDER,
 										false)
 
-	local modifier_building_res = "modifier_imba_proximity_mine_building_res"
-	local modifier_talent_shrapnel = "modifier_imba_proximity_mine_talent"
-
-	-- If this is a Big Boom, RAIN THEM SHRAPNELS!
-	if self.is_big_boom then
-		CreateModifierThinker(caster, self.ability, modifier_talent_shrapnel, {duration = self.big_boom_shrapnel_duration}, casterAbsOrigin, caster:GetTeamNumber(), false)
-	end
-
 	-- Deal damage to nearby non-flying enemies
 	for _,enemy in pairs(enemies) do
-
 		-- If an enemy doesn't have flying movement, ignore it, otherwise continue
 		if not enemy:HasFlyMovementCapability() then
-
 			-- If this is a Big Boom, add damage to the blast!
 			local damage = self.mine_damage
-			if self.is_big_boom then
-				damage = damage + self.big_boom_mine_bonus_dmg
-			end
 
 			-- If the enemy is a building, reduce damage to it
 			if enemy:IsBuilding() then
@@ -558,8 +474,8 @@ function modifier_imba_proximity_mine:_Explode()
 			ApplyDamage(damageTable)
 
 			-- If the enemy was a building, give it magical protection
-			if enemy:IsBuilding() and not enemy:HasModifier(modifier_building_res) then
-				enemy:AddNewModifier(caster, self.ability, modifier_building_res, {duration = self.buidling_damage_duration})
+			if enemy:IsBuilding() and not enemy:HasModifier("modifier_imba_proximity_mine_building_res") then
+				enemy:AddNewModifier(caster, self.ability, "modifier_imba_proximity_mine_building_res", {duration = self.buidling_damage_duration})
 			end
 
 			RefreshElectroCharge(enemy)
@@ -572,8 +488,6 @@ function modifier_imba_proximity_mine:_Explode()
 			end)
 		end
 	end
-
-	ApplyInflammableToRemoteMines(caster, self.trigger_range, nil)
 
 	-- If an enemy was killed from a mine, play kill response
 	if RollPercentage(25) then
@@ -664,72 +578,6 @@ end
 function modifier_imba_proximity_mine_building_res:IsHidden() return true end
 function modifier_imba_proximity_mine_building_res:IsPurgable() return false end
 function modifier_imba_proximity_mine_building_res:IsDebuff() return false end
-
-
-
-
--- BIG BOOM SHRAPNEL MODIFIER!
-modifier_imba_proximity_mine_talent = modifier_imba_proximity_mine_talent or class({})
-
-function modifier_imba_proximity_mine_talent:OnCreated()
-	if IsServer() then
-		-- Ability properties
-		self.caster = self:GetCaster()
-		self.parent = self:GetParent()
-		self.parent_team = self.parent:GetTeamNumber()
-		local parentAbsOrigin = self.parent:GetAbsOrigin()
-		self.parent_pos = parentAbsOrigin
-		self.ability = self:GetAbility()
-
-		-- Ability specials
-		self.big_boom_shrapnel_aoe = self.ability:GetSpecialValueFor("big_boom_shrapnel_aoe")
-		self.big_boom_shrapnel_damage = self.ability:GetSpecialValueFor("big_boom_shrapnel_damage")
-		self.big_boom_shrapnel_interval = self.ability:GetSpecialValueFor("big_boom_shrapnel_interval")
-
-		-- Create rain particles
-		local particle_rain = "particles/hero/techies/techies_big_boom_explosions.vpcf"
-		local particle_rain_fx = ParticleManager:CreateParticle(particle_rain, PATTACH_WORLDORIGIN, nil)
-		ParticleManager:SetParticleControl(particle_rain_fx, 0, parentAbsOrigin)
-		ParticleManager:SetParticleControl(particle_rain_fx, 1, parentAbsOrigin)
-		ParticleManager:SetParticleControl(particle_rain_fx, 3, parentAbsOrigin)
-		self:AddParticle(particle_rain_fx, false, false, -1, false, false)
-
-		-- Damage per interval
-		self.damage = self.big_boom_shrapnel_damage * self.big_boom_shrapnel_interval
-
-		-- Start thinking
-		self:StartIntervalThink(self.big_boom_shrapnel_interval)
-	end
-end
-
-function modifier_imba_proximity_mine_talent:OnIntervalThink()
-	if IsServer() then
-		-- Find all nearby units
-		local enemies = FindUnitsInRadius(self.parent_team,
-										  self.parent_pos,
-										  nil,
-										  self.big_boom_shrapnel_aoe,
-										  DOTA_UNIT_TARGET_TEAM_ENEMY,
-										  DOTA_UNIT_TARGET_BASIC + DOTA_UNIT_TARGET_HERO,
-										  DOTA_DAMAGE_FLAG_NONE,
-										  FIND_ANY_ORDER,
-										  false)
-
-		for _, enemy in pairs(enemies) do
-			-- Deal magical damage to them
-			local damageTable = {victim = enemy,
-								attacker = self.caster,
---								damage = self.damage * ((1+(PlayerResource:GetSelectedHeroEntity(self.caster:GetPlayerOwnerID()):GetSpellPower() * 0.01))),
-								damage = self.damage,
-								damage_type = DAMAGE_TYPE_MAGICAL,
-								ability = self.ability
-								}
-
-			ApplyDamage(damageTable)
-		end
-	end
-end
-
 
 ------------------------------
 --       STASIS TRAP        --
@@ -858,7 +706,7 @@ function imba_techies_stasis_trap:OnSpellStart()
 
 	else -- Plant on the ground
 		-- Plant trap
-		local trap = CreateUnitByName("npc_imba_techies_stasis_trap", target_point, true, caster, caster, caster:GetTeamNumber())
+		local trap = CreateUnitByName("npc_dota_techies_stasis_trap", target_point, true, caster, caster, caster:GetTeamNumber())
 		local trap_ability = "imba_techies_stasis_trap_trigger"
 
 		-- Set the mine's team to be the same as the caster
@@ -1022,14 +870,9 @@ function modifier_imba_statis_trap:_Explode()
 									false)
 
 	for _,mine in pairs(mines) do
-		if mine:GetUnitName() == "npc_imba_techies_stasis_trap" and mine ~= caster then
+		if mine:GetUnitName() == "npc_dota_techies_stasis_trap" and mine ~= caster then
 			mine:AddNewModifier(caster, self.ability, modifier_disarmed, {})
 		end
-	end
-
-	-- #4 Talent: Stasis Traps grants charges of Inflammable to Remote mines
-	if self.owner and self.owner:HasTalent("special_bonus_imba_techies_4") then
-		ApplyInflammableToRemoteMines(caster, self.root_range, mines)
 	end
 
 	-- Apply flying vision
@@ -1100,18 +943,13 @@ function modifier_imba_statis_trap_electrocharge:OnCreated()
 		self.magnetic_stack_movespeed = self.ability:GetSpecialValueFor("magnetic_stack_movespeed")        
 
 		-- If this is not the Stasis Trap casting it, do nothing (hellblade/curseblade interactions)
-		if self.caster:GetUnitName() ~= "npc_imba_techies_stasis_trap" then
+		if self.caster:GetUnitName() ~= "npc_dota_techies_stasis_trap" then
 			return nil
 		end
 
 		-- If the parent is in the same team as the caster, do nothing (don't pull mines towards it)         
 		if self.teamnumber == self.parent_teamnumber then
 			return nil
-		end
-
-		-- #3 Talent: Electrocharge mines pull radius increase
-		if self.owner then            
-			self.base_magnetic_radius = self.base_magnetic_radius + self.owner:FindTalentValue("special_bonus_imba_techies_3")
 		end
 
 		-- Start thinking
@@ -1124,32 +962,30 @@ function modifier_imba_statis_trap_electrocharge:IsPurgable() return true end
 function modifier_imba_statis_trap_electrocharge:IsDebuff() return true end
 
 function modifier_imba_statis_trap_electrocharge:OnIntervalThink()
-	if IsServer() then        
-
+	if IsServer() then
 		-- Determine movespeed and radius for this tick
 		local stacks = self:GetStackCount()
 		local movespeed = self.base_magnetic_movespeed + self.magnetic_stack_movespeed * stacks
 		local radius = self.base_magnetic_radius + self.magnetic_stack_radius * stacks
 
-
 		local parentAbsOrigin = self.parent:GetAbsOrigin()
 
 		-- Find all nearby mines
 		local mines = FindUnitsInRadius(self.teamnumber,
-										parentAbsOrigin,
-										nil,
-										radius,
-										DOTA_UNIT_TARGET_TEAM_FRIENDLY,
-										DOTA_UNIT_TARGET_OTHER,
-										DOTA_UNIT_TARGET_FLAG_NONE,
-										FIND_ANY_ORDER,
-										false)
+			parentAbsOrigin,
+			nil,
+			radius,
+			DOTA_UNIT_TARGET_TEAM_FRIENDLY,
+			DOTA_UNIT_TARGET_OTHER,
+			DOTA_UNIT_TARGET_FLAG_NONE,
+			FIND_ANY_ORDER,
+			false
+		)
 
 		-- Move each mine towards the parent of the debuff
 		for _,mine in pairs(mines) do
 			local mineUnitName = mine:GetUnitName()
-
-			if mineUnitName == "npc_imba_techies_proximity_mine" or mineUnitName == "npc_imba_techies_proximity_mine_big_boom" or mineUnitName == "npc_imba_techies_stasis_trap" or mineUnitName == "npc_imba_techies_remote_mine" then
+			if mineUnitName == "npc_dota_techies_land_mine" or mineUnitName == "npc_dota_techies_stasis_trap" then
 				local mineAbsOrigin = mine:GetAbsOrigin()
 
 				-- Get mine's distance from enemy
@@ -1171,7 +1007,6 @@ end
 function modifier_imba_statis_trap_electrocharge:GetTexture()
 	return "techies_stasis_trap"
 end
-
 
 -- Disarmed Statis Traps modifier
 modifier_imba_statis_trap_disarmed = modifier_imba_statis_trap_disarmed or class({})

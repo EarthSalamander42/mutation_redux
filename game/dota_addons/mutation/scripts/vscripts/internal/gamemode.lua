@@ -47,14 +47,14 @@ function Mutation:_InitGameMode()
 	-- All of these events can potentially be fired by the game, though only the uncommented ones have had
 	-- Functions supplied for them.  If you are interested in the other events, you can uncomment the
 	-- ListenToGameEvent line and add a function to handle the event
-	ListenToGameEvent('entity_killed', Dynamic_Wrap(Mutation, 'OnEntityKilled'), self)
-	ListenToGameEvent('player_connect_full', Dynamic_Wrap(Mutation, 'OnConnectFull'), self)
-	ListenToGameEvent('player_disconnect', Dynamic_Wrap(Mutation, 'OnDisconnect'), self)
-	ListenToGameEvent('tree_cut', Dynamic_Wrap(Mutation, 'OnTreeCut'), self)
 	ListenToGameEvent('game_rules_state_change', Dynamic_Wrap(Mutation, 'OnGameRulesStateChange'), self)
 	ListenToGameEvent('npc_spawned', Dynamic_Wrap(Mutation, 'OnNPCSpawned'), self)
-	ListenToGameEvent("player_reconnected", Dynamic_Wrap(Mutation, 'OnPlayerReconnect'), self)
-	ListenToGameEvent("player_chat", Dynamic_Wrap(Mutation, 'OnPlayerChat'), self)
+	ListenToGameEvent('entity_killed', Dynamic_Wrap(Mutation, 'OnEntityKilled'), self)
+--	ListenToGameEvent('player_connect_full', Dynamic_Wrap(Mutation, 'OnConnectFull'), self)
+--	ListenToGameEvent('player_disconnect', Dynamic_Wrap(Mutation, 'OnDisconnect'), self)
+--	ListenToGameEvent('tree_cut', Dynamic_Wrap(Mutation, 'OnTreeCut'), self)
+--	ListenToGameEvent("player_reconnected", Dynamic_Wrap(Mutation, 'OnPlayerReconnect'), self)
+--	ListenToGameEvent("player_chat", Dynamic_Wrap(Mutation, 'OnPlayerChat'), self)
 
 	local spew = 0
 	if BAREBONES_DEBUG_SPEW then

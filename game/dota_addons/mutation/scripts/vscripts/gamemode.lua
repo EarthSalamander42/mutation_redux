@@ -114,6 +114,7 @@ function Mutation:InitGameMode()
 	LinkLuaModifier("modifier_mutation_kill_streak_power", "modifiers/modifier_mutation_kill_streak_power.lua", LUA_MODIFIER_MOTION_NONE )
 	LinkLuaModifier("modifier_frantic", "modifiers/modifier_frantic.lua", LUA_MODIFIER_MOTION_NONE )
 	LinkLuaModifier("modifier_no_health_bar", "modifiers/modifier_no_health_bar.lua", LUA_MODIFIER_MOTION_NONE )
+	LinkLuaModifier("modifier_river", "modifiers/modifier_river.lua", LUA_MODIFIER_MOTION_NONE )
 
 	LinkLuaModifier("modifier_mutation_sun_strike", "modifiers/periodic_spellcast/modifier_mutation_sun_strike.lua", LUA_MODIFIER_MOTION_NONE )
 	LinkLuaModifier("modifier_mutation_thundergods_wrath", "modifiers/periodic_spellcast/modifier_mutation_thundergods_wrath.lua", LUA_MODIFIER_MOTION_NONE )
@@ -122,13 +123,16 @@ function Mutation:InitGameMode()
 	LinkLuaModifier("modifier_mutation_shadow_dance", "modifiers/modifier_mutation_shadow_dance.lua", LUA_MODIFIER_MOTION_NONE )
 	LinkLuaModifier("modifier_mutation_ants", "modifiers/modifier_mutation_ants.lua", LUA_MODIFIER_MOTION_NONE )
 
---	Mutation:ChooseMutation("positive", POSITIVE_MUTATION_LIST, 15 - 1) -- -1 because index is 0
---	Mutation:ChooseMutation("negative", NEGATIVE_MUTATION_LIST, 10 - 1)
---	Mutation:ChooseMutation("terrain", TERRAIN_MUTATION_LIST, 11 - 1)
-
-	Mutation:ChooseMutation("positive", POSITIVE_MUTATION_LIST, 5 - 1) -- -1 because index is 0
-	Mutation:ChooseMutation("negative", NEGATIVE_MUTATION_LIST, 5 - 1)
-	Mutation:ChooseMutation("terrain", TERRAIN_MUTATION_LIST, 4 - 1)
+	-- Selecting Mutations (Take out if statement for IsInToolsMode if you want to test randomized)
+	if IsInToolsMode() then
+		IMBA_MUTATION["positive"] = "frantic"
+		IMBA_MUTATION["negative"] = "defense_of_the_ants"
+		IMBA_MUTATION["terrain"] = "minefield"
+	else
+		Mutation:ChooseMutation("positive", POSITIVE_MUTATION_LIST)
+		Mutation:ChooseMutation("negative", NEGATIVE_MUTATION_LIST)
+		Mutation:ChooseMutation("terrain", TERRAIN_MUTATION_LIST)
+	end
 
 	IMBA_MUTATION_PERIODIC_SPELLS = {}
 	IMBA_MUTATION_PERIODIC_SPELLS[1] = {"sun_strike", "Sunstrike", "Red"}
@@ -162,30 +166,12 @@ function Mutation:InitGameMode()
 	DebugPrint('[BAREBONES] Done loading Barebones gamemode!\n\n')
 end
 
-function Mutation:ChooseMutation(type, table, count)
-	local i = 0
---	local random_int = RandomInt(0, #table) -- dunno why it doesn't get table length
-	local random_int = RandomInt(0, count)
-
---	print("Mutation: Choose Mutation:", type, random_int)
-
-	for mutation, bool in pairs(table) do
-		if i == random_int then
---			print("Mutation:", mutation)
-			IMBA_MUTATION[type] = mutation
-			table[mutation] = true
-
---			if IsInToolsMode() then
---				IMBA_MUTATION["positive"] = "slark_mode"
---				IMBA_MUTATION["negative"] = "defense_of_the_ants"
---				IMBA_MUTATION["terrain"] = "minefield"
---			end
-
-			return
-		else
-			i = i + 1
-		end
-	end
+function Mutation:ChooseMutation(mType, mList)
+	-- Pick a random number within bounds of given mutation list	
+	local random_int = RandomInt(1, #mList)
+	-- Select a mutation from within that list and place it in the relevant IMBA_MUTATION field
+	IMBA_MUTATION[mType] = mList[random_int]
+	--print("IMBA_MUTATION["..mType.."] mutation picked: ", mList[random_int])
 end
 
 function Mutation:RevealAllMap(duration)

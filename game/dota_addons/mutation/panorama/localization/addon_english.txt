@@ -44,7 +44,8 @@
 	"mutation_battle_hunger_Description"			"Everytime you kill an enemy's hero your team get troll ult."
 
 	"mutation_frantic"								"Frantic"
-	"mutation_frantic_Description"					"50% Cooldown Reduction and Status Resistance, 100% Mana Regen."
+	"mutation_frantic_Description"					"50% Cooldown Reduction and Status Resistance."
+//	"mutation_frantic_Description"					"50% Cooldown Reduction and Status Resistance, 100% Mana Regen."
 
 	// Negative
 	"mutation_death_explosion"					"Death Explosion"
