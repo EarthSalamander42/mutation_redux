@@ -25,31 +25,27 @@ end
 
 function modifier_frantic:DeclareFunctions()
 	local funcs = {
-		MODIFIER_PROPERTY_COOLDOWN_PERCENTAGE,
---		MODIFIER_PROPERTY_MANA_REGEN_PERCENTAGE,
+		MODIFIER_PROPERTY_COOLDOWN_PERCENTAGE_STACKING,
+		MODIFIER_PROPERTY_MANACOST_PERCENTAGE,
 		MODIFIER_PROPERTY_STATUS_RESISTANCE_STACKING,
-		MODIFIER_PROPERTY_RESPAWNTIME_PERCENTAGE,
 	}
 
 	return funcs
 end
 
 function modifier_frantic:OnCreated()
-	self:SetStackCount(50)
+	if not IsServer() then return end
+	self:SetStackCount(_G.IMBA_FRANTIC_VALUE)
 end
---[[ -- not working for reasons
-function modifier_frantic:GetModifierPercentageManaRegen()
-	return 200
+
+function modifier_frantic:GetModifierPercentageCooldownStacking()
+	return self:GetStackCount()
 end
-]]
-function modifier_frantic:GetModifierPercentageCooldown()
+
+function modifier_frantic:GetModifierPercentageManacost()
 	return self:GetStackCount()
 end
 
 function modifier_frantic:GetModifierStatusResistanceStacking()
 	return self:GetStackCount()
-end
-
-function modifier_frantic:GetModifierPercentageRespawnTime()
-    return self:GetStackCount()
 end

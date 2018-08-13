@@ -130,3 +130,25 @@ function CalculateDistance(ent1, ent2)
 	local distance = (pos1 - pos2):Length2D()
 	return distance
 end
+
+-- Check if an unit is near the enemy fountain
+function IsNearFountain(location, distance)
+	for _, fountain in pairs(Entities:FindAllByClassname("ent_dota_fountain")) do
+		if (fountain:GetAbsOrigin() - location):Length2D() <= distance then
+			return true
+		end
+	end
+
+	return false
+end
+
+-- Sets a creature's max health to [health]
+function SetCreatureHealth(unit, health, update_current_health)
+
+	unit:SetBaseMaxHealth(health)
+	unit:SetMaxHealth(health)
+
+	if update_current_health then
+		unit:SetHealth(health)
+	end
+end

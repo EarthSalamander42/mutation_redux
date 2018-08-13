@@ -2,12 +2,6 @@ var mutation = [];
 
 function Mutation(args) {
 	$("#Mutations").style.visibility = "visible";
-
-	$.Msg("Mutation JS:")
-	$.Msg(args["positive"])
-	$.Msg(args["negative"])
-	$.Msg(args["terrain"])
-
 	mutation[1] = args["positive"]
 	mutation[2] = args["negative"]
 	mutation[3] = args["terrain"]
@@ -21,18 +15,7 @@ function Mutation(args) {
 	}
 }
 
-function SetMutationTooltip(j) {
-	var panel = $("#Mutation" + j)
-
-	panel.SetPanelEvent("onmouseover", function () {
-		$.DispatchEvent("UIShowTextTooltip", panel, $.Localize("mutation_" + mutation[j] + "_Description"));
-	})
-
-	panel.SetPanelEvent("onmouseout", function () {
-		$.DispatchEvent("UIHideTextTooltip", panel);
-	})
-}
-
 (function () {
-	GameEvents.Subscribe("send_mutations", Mutation);
+	var mutations = CustomNetTables.GetTableValue("game_options", "mutations")
+	Mutation(mutations);
 })();

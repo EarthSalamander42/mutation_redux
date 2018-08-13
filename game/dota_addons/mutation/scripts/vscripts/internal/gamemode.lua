@@ -118,7 +118,5 @@ function Mutation:_CaptureGameMode()
 		mode:SetDaynightCycleDisabled( DISABLE_DAY_NIGHT_CYCLE )
 		mode:SetKillingSpreeAnnouncerDisabled( DISABLE_KILLING_SPREE_ANNOUNCER )
 		mode:SetStickyItemDisabled( DISABLE_STICKY_ITEM )
-
-		self:OnFirstPlayerLoaded()
 	end 
 end

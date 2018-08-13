@@ -2,9 +2,6 @@
 
 -- The overall game state has changed
 function Mutation:OnGameRulesStateChange(keys)
-	DebugPrint("[BAREBONES] GameRules State Changed")
-	DebugPrintTable(keys)
-
 	local newState = GameRules:State_Get()
 
 	if newState == DOTA_GAMERULES_STATE_INIT then
@@ -12,123 +9,330 @@ function Mutation:OnGameRulesStateChange(keys)
 	elseif newState == DOTA_GAMERULES_STATE_WAIT_FOR_PLAYERS_TO_LOAD then
 		self.bSeenWaitForPlayers = true
 	elseif newState == DOTA_GAMERULES_STATE_HERO_SELECTION then
-		Mutation:PostLoadPrecache()
+		self:PostLoadPrecache()
 	elseif GameRules:State_Get() == DOTA_GAMERULES_STATE_PRE_GAME then
-		if IMBA_MUTATION["terrain"] == "no_trees" then
+		if MUTATION_LIST["terrain"] == "no_trees" then
 			GameRules:SetTreeRegrowTime(99999)
 			GridNav:DestroyTreesAroundPoint(Vector(0, 0, 0), 50000, false)
-			Mutation:RevealAllMap(1.0)
-		elseif IMBA_MUTATION["terrain"] == "omni_vision" then
-			Mutation:RevealAllMap()
-		elseif IMBA_MUTATION["terrain"] == "fast_runes" then
-			GameRules:GetGameModeEntity():SetPowerRuneSpawnInterval(30.0)
-			GameRules:GetGameModeEntity():SetBountyRuneSpawnInterval(30.0)
+			self:RevealAllMap(1.0)
+		elseif MUTATION_LIST["terrain"] == "omni_vision" then
+			self:RevealAllMap()
+		elseif MUTATION_LIST["terrain"] == "fast_runes" then
+			GameRules:GetGameModeEntity():SetPowerRuneSpawnInterval(FAST_RUNES_TIME)
+			GameRules:GetGameModeEntity():SetBountyRuneSpawnInterval(FAST_RUNES_TIME)
 		end
 
 		Timers:CreateTimer(3.0, function()
-			CustomGameEventManager:Send_ServerToAllClients("send_mutations", IMBA_MUTATION)
+			CustomGameEventManager:Send_ServerToAllClients("send_mutations", MUTATION_LIST)
 		end)
 	elseif GameRules:State_Get() == DOTA_GAMERULES_STATE_GAME_IN_PROGRESS then
-		if IMBA_MUTATION["negative"] == "periodic_spellcast" then
-			local random_int = RandomInt(1, #IMBA_MUTATION_PERIODIC_SPELLS)
-			local caster = Entities:FindByName(nil, "dota_goodguys_fort")
+		if MUTATION_LIST["positive"] == "ultimate_level" then
+			Mutation:UltimateLevel()
+		end
 
+		if MUTATION_LIST["negative"] == "periodic_spellcast" then
+			local buildings = FindUnitsInRadius(DOTA_TEAM_GOODGUYS, Vector(0,0,0), nil, 20000, DOTA_UNIT_TARGET_TEAM_BOTH, DOTA_UNIT_TARGET_BUILDING, DOTA_UNIT_TARGET_FLAG_INVULNERABLE, FIND_ANY_ORDER, false)
+			local good_fountain = nil
+			local bad_fountain = nil
+
+			for _, building in pairs(buildings) do
+				local building_name = building:GetName()
+				if string.find(building_name, "ent_dota_fountain_bad") then
+					bad_fountain = building
+				elseif string.find(building_name, "ent_dota_fountain_good") then
+					good_fountain = building
+				end
+			end
+
+			local random_int
+			local counter = 0 -- Used to alternate between negative and positive spellcasts, and increments after each timer call
+			local varSwap -- Switches between 1 and 2 based on counter for negative and positive spellcasts
+
+			local table
 			Timers:CreateTimer(55.0, function()
-				random_int = RandomInt(1, #IMBA_MUTATION_PERIODIC_SPELLS)
-				Notifications:TopToAll({text = IMBA_MUTATION_PERIODIC_SPELLS[random_int][2].." Mutation in 5 seconds...", duration = 5.0, {color = IMBA_MUTATION_PERIODIC_SPELLS[random_int][3]}})
+				varSwap = (counter % 2) + 1
+				if varSwap == 1 then
+					table = MUTATION_LIST_NEGATIVE_PERIODIC_SPELLS
+				else
+					table = MUTATION_LIST_POSITIVE_PERIODIC_SPELLS
+				end
+
+				random_int = RandomInt(1, #table)
+				Notifications:TopToAll({text = table[random_int][2].." Mutation in 5 seconds...", duration = 5.0, style = {color = table[random_int][3]}})
 
 				return 60.0
 			end)
 
-			Timers:CreateTimer(function()
+			Timers:CreateTimer(60.0, function()
+				if bad_fountain == nil or good_fountain == nil then
+					log.error("nao cucekd up!!! ")
+					return 60.0 
+				end
+
 				for _, hero in pairs(HeroList:GetAllHeroes()) do
-					if hero:GetTeamNumber() == 3 then
-						caster = Entities:FindByName(nil, "dota_badguys_fort")
+					if (hero:GetTeamNumber() == 3 and table[random_int][3] == "Red") or (hero:GetTeamNumber() == 2 and table[random_int][3] == "Green") then
+						caster = good_fountain
 					end
 
-					if IMBA_MUTATION_PERIODIC_SPELLS[random_int][1] == "sun_strike" then
-						hero:AddNewModifier(caster, nil, "modifier_mutation_sun_strike", {duration=3.0})
-					elseif IMBA_MUTATION_PERIODIC_SPELLS[random_int][1] == "thundergods_wrath" then
-						hero:AddNewModifier(caster, nil, "modifier_mutation_thundergods_wrath", {duration=1.0})
-					elseif IMBA_MUTATION_PERIODIC_SPELLS[random_int][1] == "track" then
-						hero:AddNewModifier(caster, nil, "modifier_mutation_track", {duration=20.0})
-					elseif IMBA_MUTATION_PERIODIC_SPELLS[random_int][1] == "rupture" then
-						hero:AddNewModifier(caster, nil, "modifier_mutation_rupture", {duration=10.0})
-					end
+					hero:AddNewModifier(caster, caster, "modifier_mutation_"..table[random_int][1], {duration=table[random_int][4]})
 				end
+				counter = counter + 1
 
 				return 60.0
 			end)
 		end
 
-		if IMBA_MUTATION["terrain"] == "minefield" then
-			local mines = {
-				"npc_dota_techies_land_mine",
-				"npc_dota_techies_stasis_trap",
-			}
+		if MUTATION_LIST["terrain"] == "gift_exchange" then
+			for k, v in pairs(LoadKeyValues("scripts/npc/items.txt")) do -- Go through all the items in KeyValues.ItemKV and store valid items in validItems table
+				varFlag = 0 -- Let's borrow this memory to suss out the forbidden items first...
 
-			Timers:CreateTimer(function()
-				local units = FindUnitsInRadius(DOTA_TEAM_NEUTRALS, Vector(0,0,0), nil, FIND_UNITS_EVERYWHERE, DOTA_UNIT_TARGET_TEAM_FRIENDLY, DOTA_UNIT_TARGET_ALL, DOTA_UNIT_TARGET_FLAG_INVULNERABLE + DOTA_UNIT_TARGET_FLAG_OUT_OF_WORLD, FIND_ANY_ORDER, false)		
-				local mine_count = 0
-				local max_mine_count = 90
+				if k ~= "Version" and v["ItemCost"] and v["ItemCost"] >= minValue and v["ItemCost"] ~= 99999 and not string.find(k, "recipe") and not string.find(k, "cheese") then
+--					for _, item in pairs(self.restricted_items) do -- Make sure item isn't a restricted item
+--						if k == item then
+--							varFlag = 1
+--						end
+--					end
 
-				for _, unit in pairs(units) do
-					if unit:GetUnitName() == "npc_dota_techies_land_mine" or unit:GetUnitName() == "npc_dota_techies_stasis_trap" then			
-						if unit:GetUnitName() == "npc_dota_techies_land_mine" then
-							unit:AddAbility("imba_techies_proximity_mine_trigger"):SetLevel(RandomInt(1, 4))
-						elseif unit:GetUnitName() == "npc_dota_techies_stasis_trap" then
-							unit:AddAbility("imba_techies_stasis_trap_trigger"):SetLevel(RandomInt(1, 4))
-						end
-
-						mine_count = mine_count + 1
-					end
+					if varFlag == 0 then -- If not a restricted item (while still meeting all the other criteria...)
+						validItems[#validItems + 1] = {k = k, v = v["ItemCost"]}
+					end	
 				end
+			end
 
-				if mine_count < max_mine_count then
-					for i = 1, 10 do
-						local mine = CreateUnitByName(mines[RandomInt(1, #mines)], Vector(0, 0, 0) + RandomVector(RandomInt(1000, 15000)), true, nil, nil, DOTA_TEAM_NEUTRALS)
-						mine:AddNewModifier(mine, nil, "modifier_invulnerable", {})
-					end
+			table.sort(validItems, function(a, b) return a.v < b.v end) -- Sort by ascending item cost for easier retrieval later on
+
+			--[[
+			print("Table length: ", #validItems) -- # of valid items
+						
+			for a, b in pairs(validItems) do
+				print(a)
+				for key, value in pairs(b) do
+					print('\t', key, value)
 				end
+			end	
+			]]--
 
---				print("Mine count:", mine_count)
-				return 10.0
+			varFlag = 0
+
+			-- Create Tier 1 Table
+			repeat
+				if validItems[counter].v <= t1cap then
+					tier1[#tier1 + 1] = {k = validItems[counter].k, v = validItems[counter].v}
+					counter = counter + 1
+				else
+					varFlag = 1
+				end
+			until varFlag == 1
+
+			varFlag = 0
+
+			-- Create Tier 2 Table
+			repeat
+				if validItems[counter].v <= t2cap then
+					tier2[#tier2 + 1] = {k = validItems[counter].k, v = validItems[counter].v}
+					counter = counter + 1
+				else
+					varFlag = 1
+				end
+			until varFlag == 1
+
+			varFlag = 0
+
+			-- Create Tier 3 Table
+			repeat
+				if validItems[counter].v <= t3cap then
+					tier3[#tier3 + 1] = {k = validItems[counter].k, v = validItems[counter].v}
+					counter = counter + 1
+				else
+					varFlag = 1
+				end
+			until varFlag == 1
+
+			varFlag = 0
+
+			-- Create Tier 4 Table
+			for num = counter, #validItems do
+				tier4[#tier4 + 1] = {k = validItems[num].k, v = validItems[num].v}
+			end
+
+			varFlag = 0
+
+			--[[
+			print("TIER 1 LIST")
+			
+			for a, b in pairs(tier1) do
+				print(a)
+				for key, value in pairs(b) do
+					print('\t', key, value)
+				end
+			end	
+			
+			print("TIER 2 LIST")
+			
+			for a, b in pairs(tier2) do
+				print(a)
+				for key, value in pairs(b) do
+					print('\t', key, value)
+				end
+			end	
+			
+			print("TIER 3 LIST")
+			
+			for a, b in pairs(tier3) do
+				print(a)
+				for key, value in pairs(b) do
+					print('\t', key, value)
+				end
+			end	
+			
+			print("TIER 4 LIST")
+			
+			for a, b in pairs(tier4) do
+				print(a)
+				for key, value in pairs(b) do
+					print('\t', key, value)
+				end
+			end	
+			]]--
+
+			Timers:CreateTimer(110.0, function()
+				Mutation:SpawnRandomItem()
+
+				return 120.0
 			end)
+		elseif MUTATION_LIST["terrain"] == "call_down" then
+			local dummy_unit = CreateUnitByName("npc_dummy_unit", Vector(0, 0, 0), true, nil, nil, DOTA_TEAM_NEUTRALS)
+			dummy_unit:AddNewModifier(dummy_unit, nil, "modifier_mutation_call_down", {})
+		elseif MUTATION_LIST["terrain"] == "wormhole" then
+			-- Assign initial wormhole positions
+			local current_wormholes = {}
+			for i = 1, 12 do
+				local random_int = RandomInt(1, #MUTATION_LIST_WORMHOLE_POSITIONS)
+				current_wormholes[i] = MUTATION_LIST_WORMHOLE_POSITIONS[random_int]
+				table.remove(MUTATION_LIST_WORMHOLE_POSITIONS, random_int)
+			end
+
+			-- Create wormhole particles (destroy and redraw every minute to accommodate for reconnecting players)
+			local wormhole_particles = {}
+			Timers:CreateTimer(0, function()
+				for i = 1, 12 do
+					if wormhole_particles[i] then
+						ParticleManager:DestroyParticle(wormhole_particles[i], true)
+						ParticleManager:ReleaseParticleIndex(wormhole_particles[i])
+					end
+					wormhole_particles[i] = ParticleManager:CreateParticle("particles/ambient/wormhole_circle.vpcf", PATTACH_CUSTOMORIGIN, nil)
+					ParticleManager:SetParticleControl(wormhole_particles[i], 0, GetGroundPosition(current_wormholes[i], nil) + Vector(0, 0, 20))
+					ParticleManager:SetParticleControl(wormhole_particles[i], 2, MUTATION_LIST_WORMHOLE_COLORS[i])
+				end
+				return 60
+			end)
+
+			-- Teleport loop
+			Timers:CreateTimer(function()
+				-- Find units to teleport
+				for i = 1, 12 do
+					local units = FindUnitsInRadius(DOTA_TEAM_GOODGUYS, current_wormholes[i], nil, 150, DOTA_UNIT_TARGET_TEAM_BOTH, DOTA_UNIT_TARGET_HERO + DOTA_UNIT_TARGET_BASIC, DOTA_UNIT_TARGET_FLAG_MAGIC_IMMUNE_ENEMIES + DOTA_UNIT_TARGET_FLAG_INVULNERABLE + DOTA_UNIT_TARGET_FLAG_PLAYER_CONTROLLED, FIND_ANY_ORDER, false)
+					for _, unit in pairs(units) do
+						if not unit:HasModifier("modifier_mutation_wormhole_cooldown") then
+							if unit:IsHero() then
+								unit:EmitSound("Wormhole.Disappear")
+								Timers:CreateTimer(0.03, function()
+									unit:EmitSound("Wormhole.Appear")
+								end)
+							else
+								unit:EmitSound("Wormhole.CreepDisappear")
+								Timers:CreateTimer(0.03, function()
+									unit:EmitSound("Wormhole.CreepAppear")
+								end)
+							end
+							unit:AddNewModifier(unit, nil, "modifier_mutation_wormhole_cooldown", {duration = MUTATION_LIST_WORMHOLE_PREVENT_DURATION})
+							FindClearSpaceForUnit(unit, current_wormholes[13-i], true)
+							if unit.GetPlayerID and unit:GetPlayerID() then
+								PlayerResource:SetCameraTarget(unit:GetPlayerID(), unit)
+								Timers:CreateTimer(0.03, function()
+									PlayerResource:SetCameraTarget(unit:GetPlayerID(), nil)
+								end)
+							end
+						end
+					end
+				end
+
+				return 0.5
+			end)
+		elseif MUTATION_LIST["terrain"] == "tug_of_war" then
+			local golem
+			-- Random a team for the initial golem spawn
+			if RandomInt(1, 2) == 1 then
+				golem = CreateUnitByName("npc_dota_mutation_golem", MUTATION_LIST_TUG_OF_WAR_START[DOTA_TEAM_GOODGUYS], false, nil, nil, DOTA_TEAM_GOODGUYS)
+				golem.ambient_pfx = ParticleManager:CreateParticle("particles/ambient/tug_of_war_team_radiant.vpcf", PATTACH_ABSORIGIN_FOLLOW, golem)
+				ParticleManager:SetParticleControl(golem.ambient_pfx, 0, golem:GetAbsOrigin())
+				Timers:CreateTimer(0.1, function()
+					golem:MoveToPositionAggressive(MUTATION_LIST_TUG_OF_WAR_TARGET[DOTA_TEAM_GOODGUYS])
+				end)
+			else
+				golem = CreateUnitByName("npc_dota_mutation_golem", MUTATION_LIST_TUG_OF_WAR_START[DOTA_TEAM_BADGUYS], false, nil, nil, DOTA_TEAM_BADGUYS)
+				golem.ambient_pfx = ParticleManager:CreateParticle("particles/ambient/tug_of_war_team_dire.vpcf", PATTACH_ABSORIGIN_FOLLOW, golem)
+				ParticleManager:SetParticleControl(golem.ambient_pfx, 0, golem:GetAbsOrigin())
+				Timers:CreateTimer(0.1, function()
+					golem:MoveToPositionAggressive(MUTATION_LIST_TUG_OF_WAR_TARGET[DOTA_TEAM_BADGUYS])
+				end)
+			end
+
+			-- Initial logic
+			golem:AddNewModifier(golem, nil, "modifier_mutation_tug_of_war_golem", {}):SetStackCount(1)
+			FindClearSpaceForUnit(golem, golem:GetAbsOrigin(), true)
+			golem:SetDeathXP(50)
+			golem:SetMinimumGoldBounty(50)
+			golem:SetMaximumGoldBounty(50)
 		end
 	end
 end
 
 -- An NPC has spawned somewhere in game.  This includes heroes
 function Mutation:OnNPCSpawned(keys)
-	DebugPrint("[BAREBONES] NPC Spawned")
-	DebugPrintTable(keys)
-
 	local npc = EntIndexToHScript(keys.entindex)
 
+	if MUTATION_LIST["terrain"] == "speed_freaks" then
+		if not npc:IsBuilding() then
+			npc:AddNewModifier(npc, nil, "modifier_mutation_speed_freaks", {projectile_speed = SPEED_FREAKS_PROJECTILE_SPEED, movespeed_pct = SPEED_FREAKS_MOVESPEED_PCT, max_movespeed = SPEED_FREAKS_MAX_MOVESPEED})
+		end
+	end
+
 	if npc:IsRealHero() then
+		-- Check if we can add modifiers to hero
+		if not Mutation:IsEligibleHero(npc) then return end
+
 		if npc.first_spawn == nil then
 --			print("Mutation: On Hero First Spawn")
 
-			if IMBA_MUTATION["positive"] == "killstreak_power" then
+			if MUTATION_LIST["positive"] == "killstreak_power" then
 				npc:AddNewModifier(npc, nil, "modifier_mutation_kill_streak_power", {})
-			elseif IMBA_MUTATION["positive"] == "frantic" then
+			elseif MUTATION_LIST["positive"] == "frantic" then
 				npc:AddNewModifier(npc, nil, "modifier_frantic", {})
-			elseif IMBA_MUTATION["positive"] == "jump_start" then
+			elseif MUTATION_LIST["positive"] == "jump_start" then
 				npc:AddExperience(2300, DOTA_ModifyXP_CreepKill, false, true)
+			elseif MUTATION_LIST["positive"] == "super_blink" then
+				if npc:IsIllusion() then return end
+				npc:AddItemByName("item_super_blink"):SetSellable(false)
+			elseif MUTATION_LIST["positive"] == "pocket_tower" then
+				npc:AddItemByName("item_pocket_tower")
+			elseif MUTATION_LIST["positive"] == "super_fervor" then
+				npc:AddNewModifier(npc, nil, "modifier_mutation_super_fervor", {})
 			end
 
-			if IMBA_MUTATION["negative"] == "death_explosion" then
+			if MUTATION_LIST["negative"] == "death_explosion" then
 				npc:AddNewModifier(npc, nil, "modifier_mutation_death_explosion", {})
-			elseif IMBA_MUTATION["negative"] == "no_health_bar" then
+			elseif MUTATION_LIST["negative"] == "no_health_bar" then
 				npc:AddNewModifier(npc, nil, "modifier_no_health_bar", {})
-			elseif IMBA_MUTATION["negative"] == "defense_of_the_ants" then
+			elseif MUTATION_LIST["negative"] == "defense_of_the_ants" then
 				npc:AddNewModifier(npc, nil, "modifier_mutation_ants", {})
 			end
 
 			npc.first_spawn = true
 		end
 
-		Mutation:OnHeroSpawn(npc)
+		self:OnHeroSpawn(npc)
+		return
 	end
 end
 
@@ -158,28 +362,46 @@ function Mutation:OnEntityKilled( keys )
 
 	-- Put code here to handle when an entity gets killed
 	if killedUnit:IsRealHero() then
-		Mutation:OnHeroDeath(killedUnit)
+		self:OnHeroDeath(killedUnit)
+		return
 	end
 end
 
 function Mutation:OnHeroSpawn(hero)
 --	print("Mutation: On Hero Spawn")
 
-	if IMBA_MUTATION["positive"] == "damage_reduction" then
+	if MUTATION_LIST["positive"] == "damage_reduction" then
 		hero:AddNewModifier(hero, nil, "modifier_mutation_damage_reduction", {})
-	elseif IMBA_MUTATION["positive"] == "slark_mode" then
+	elseif MUTATION_LIST["positive"] == "slark_mode" then
 		hero:AddNewModifier(hero, nil, "modifier_mutation_shadow_dance", {})
 	end
 
-	if IMBA_MUTATION["terrain"] == "sleepy_river" then
+	if MUTATION_LIST["terrain"] == "sleepy_river" then
 		hero:AddNewModifier(hero, nil, "modifier_river", {})
+	elseif MUTATION_LIST["terrain"] == "river_flows" then
+		hero:AddNewModifier(hero, nil, "modifier_mutation_river_flows", {})
+	elseif MUTATION_LIST["terrain"] == "sticky_river" then
+		hero:AddNewModifier(hero, nil, "modifier_sticky_river", {})
 	end
+
+	if hero.tombstone_fx then
+		ParticleManager:DestroyParticle(hero.tombstone_fx, false)
+		ParticleManager:ReleaseParticleIndex(hero.tombstone_fx)
+		hero.tombstone_fx = nil
+	end
+
+	Timers:CreateTimer(FrameTime(), function()
+		if IsNearFountain(hero:GetAbsOrigin(), 1200) == false then
+			hero:SetHealth(hero:GetHealth() / 2)
+			hero:SetMana(hero:GetMana() / 2)
+		end
+	end)
 end
 
 function Mutation:OnHeroDeath(hero)
 --	print("Mutation: On Hero Dead")
 
-	if IMBA_MUTATION["positive"] == "teammate_resurrection" then
+	if MUTATION_LIST["positive"] == "teammate_resurrection" then
 		local newItem = CreateItem("item_tombstone", hero, hero)
 		newItem:SetPurchaseTime(0)
 		newItem:SetPurchaser(hero)
@@ -188,15 +410,14 @@ function Mutation:OnHeroDeath(hero)
 		tombstone:SetContainedItem(newItem)
 		tombstone:SetAngles(0, RandomFloat(0, 360), 0)
 		FindClearSpaceForUnit(tombstone, hero:GetAbsOrigin(), true)
+
+		hero.tombstone_fx = ParticleManager:CreateParticle("particles/units/heroes/hero_abaddon/holdout_borrowed_time_"..hero:GetTeamNumber()..".vpcf", PATTACH_ABSORIGIN_FOLLOW, tombstone)
 	end
 
-	if IMBA_MUTATION["negative"] == "death_gold_drop" then
-		local game_time = math.min(GameRules:GetDOTATime(false, false) / 60, 30)
-		local random_int = RandomInt(30, 60)
+	if MUTATION_LIST["negative"] == "death_gold_drop" then
 		local newItem = CreateItem("item_bag_of_gold", nil, nil)
 		newItem:SetPurchaseTime(0)
-		print("Bag of Gold:", game_time, random_int, random_int * game_time)
-		newItem:SetCurrentCharges(random_int * game_time + 100)
+		newItem:SetCurrentCharges((hero:GetGold() / 100 * DEATH_GOLD_DROP_PCT) + DEATH_GOLD_DROP_FLAT)
 
 		local drop = CreateItemOnPositionSync(hero:GetAbsOrigin(), newItem)
 		local dropTarget = hero:GetAbsOrigin() + RandomVector(RandomFloat( 50, 150 ))

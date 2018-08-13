@@ -2,6 +2,8 @@ LinkLuaModifier("modifier_mutation_track_buff_ms", "modifiers/periodic_spellcast
 
 modifier_mutation_track = class({})
 
+function modifier_mutation_track:IsPurgable() return false end
+
 function modifier_mutation_track:OnCreated()
 	-- Ability properties
 	self.particle_shield = "particles/units/heroes/hero_bounty_hunter/bounty_hunter_track_shield.vpcf"
@@ -10,28 +12,27 @@ function modifier_mutation_track:OnCreated()
 	-- Ability specials
 	self.bonus_gold_allies = 300
 	self.haste_radius = 900
-	self.haste_linger = 0.5
 
 	if IsServer() then
 		-- Adjust custom lobby gold settings to the gold
 		self.bonus_gold_allies = self.bonus_gold_allies
 
 		-- Add overhead particle only for the caster's team
-		self.particle_shield_fx = ParticleManager:CreateParticleForTeam(self.particle_shield, PATTACH_OVERHEAD_FOLLOW, self:GetParent(), self:GetCaster():GetTeamNumber())
+		self.particle_shield_fx = ParticleManager:CreateParticle(self.particle_shield, PATTACH_OVERHEAD_FOLLOW, self:GetParent())
 		ParticleManager:SetParticleControl(self.particle_shield_fx, 0, self:GetParent():GetAbsOrigin())
 		self:AddParticle(self.particle_shield_fx, false, false, -1, false, true)
 
 		-- Add the track particle only for the caster's team
-		self.particle_trail_fx = ParticleManager:CreateParticleForTeam(self.particle_trail, PATTACH_ABSORIGIN_FOLLOW, self:GetParent(), self:GetCaster():GetTeamNumber())
+		self.particle_trail_fx = ParticleManager:CreateParticle(self.particle_trail, PATTACH_ABSORIGIN_FOLLOW, self:GetParent())
 		ParticleManager:SetParticleControl(self.particle_trail_fx, 0, self:GetParent():GetAbsOrigin())
 		ParticleManager:SetParticleControlEnt(self.particle_trail_fx, 1, self:GetParent(), PATTACH_ABSORIGIN_FOLLOW, nil, self:GetParent():GetAbsOrigin(), true)
 		ParticleManager:SetParticleControl(self.particle_trail_fx, 8, Vector(1,0,0))
 		self:AddParticle(self.particle_trail_fx, false, false, -1, false, false)
 
-		-- If Bounty has the talent, start thinking
-		if self.has_talent_2 then
-			self:StartIntervalThink(FrameTime())
-		end
+		-- Play cast sound for the player's team only
+		EmitSoundOnLocationForAllies(self:GetParent():GetAbsOrigin(), "Hero_BountyHunter.Target", self:GetParent())
+
+		self:GetParent():AddNewModifier(self:GetParent(), nil, "modifier_mutation_track_buff_ms", {})
 	end
 end
 
@@ -43,8 +44,10 @@ function modifier_mutation_track:OnRefresh()
 	self:OnCreated()
 end
 
-function modifier_mutation_track:OnIntervalThink()
-	AddFOWViewer(self:GetCaster():GetTeamNumber(), self:GetParent():GetAbsOrigin(), self.talent_2_vision_radius, FrameTime(), false)
+function modifier_mutation_track:OnRemoved()
+	if IsServer() then
+		self:GetParent():RemoveModifierByName("modifier_mutation_track_buff_ms")
+	end
 end
 
 function modifier_mutation_track:CheckState()
@@ -54,34 +57,6 @@ function modifier_mutation_track:CheckState()
 
 	local state = {[MODIFIER_STATE_INVISIBLE] = false}
 	return state
-end
-
-function modifier_mutation_track:GetAuraDuration()
-	return self.haste_linger
-end
-
-function modifier_mutation_track:GetAuraRadius()
-	return self.haste_radius
-end
-
-function modifier_mutation_track:GetAuraSearchFlags()
-	return DOTA_UNIT_TARGET_FLAG_MAGIC_IMMUNE_ENEMIES
-end
-
-function modifier_mutation_track:GetAuraSearchTeam()
-	return DOTA_UNIT_TARGET_TEAM_ENEMY
-end
-
-function modifier_mutation_track:GetAuraSearchType()
-	return DOTA_UNIT_TARGET_HERO + DOTA_UNIT_TARGET_BASIC
-end
-
-function modifier_mutation_track:GetModifierAura()
-	return "modifier_imba_track_buff_ms"
-end
-
-function modifier_mutation_track:IsAura()
-	return true
 end
 
 function modifier_mutation_track:IsDebuff()
@@ -101,22 +76,12 @@ function modifier_mutation_track:IsHidden()
 end
 
 function modifier_mutation_track:DeclareFunctions()
-	local decFuncs = {MODIFIER_PROPERTY_PROVIDES_FOW_POSITION,
+	local decFuncs = {
+		MODIFIER_PROPERTY_PROVIDES_FOW_POSITION,
 		MODIFIER_EVENT_ON_HERO_KILLED,
-		MODIFIER_PROPERTY_INCOMING_DAMAGE_PERCENTAGE}
+		}
 
 	return decFuncs
-end
-
-function modifier_mutation_track:GetModifierIncomingDamage_Percentage()
-	-- Only apply if the caster has #1 Talent: Tracked enemies take increased damage from any source
---	if self:GetCaster():HasTalent("special_bonus_imba_bounty_hunter_1") then
-		-- Gather talent info
---		local bonus_damage_pct = self:GetCaster():FindTalentValue("special_bonus_imba_bounty_hunter_1", "bonus_damage_pct")
---		return bonus_damage_pct
---	end
-
-	return nil
 end
 
 function modifier_mutation_track:OnHeroKilled(keys)
@@ -164,11 +129,6 @@ function modifier_mutation_track:OnHeroKilled(keys)
 end
 
 function modifier_mutation_track:GetModifierProvidesFOWVision()
-	-- If the caster has #2 Talent, fogvision is disabled.
-	if self.has_talent_2 then
-		return nil
-	end
-
 	return 1
 end
 
@@ -179,6 +139,7 @@ end
 function modifier_mutation_track:IsPermanent()
 	return false
 end
+
 
 modifier_mutation_track_buff_ms = modifier_mutation_track_buff_ms or class({})
 
