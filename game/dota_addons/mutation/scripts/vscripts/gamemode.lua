@@ -34,7 +34,7 @@ function Mutation:InitGameMode()
 
 	-- Selecting Mutations (Take out if statement for IsInToolsMode if you want to test randomized)
 	if IsInToolsMode() then
-		MUTATION_LIST["positive"] = POSITIVE_MUTATION_LIST[9]
+		MUTATION_LIST["positive"] = "teammate_resurrection"
 		MUTATION_LIST["negative"] = NEGATIVE_MUTATION_LIST[3]
 		MUTATION_LIST["terrain"] = TERRAIN_MUTATION_LIST[7]
 	else

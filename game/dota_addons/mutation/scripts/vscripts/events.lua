@@ -318,6 +318,8 @@ function Mutation:OnNPCSpawned(keys)
 				npc:AddItemByName("item_pocket_tower")
 			elseif MUTATION_LIST["positive"] == "super_fervor" then
 				npc:AddNewModifier(npc, nil, "modifier_mutation_super_fervor", {})
+			elseif MUTATION_LIST["positive"] == "teammate_resurrection" then
+				npc.reincarnating = false
 			end
 
 			if MUTATION_LIST["negative"] == "death_explosion" then
@@ -338,10 +340,6 @@ end
 
 -- An entity died
 function Mutation:OnEntityKilled( keys )
-	DebugPrint( '[BAREBONES] OnEntityKilled Called' )
-	DebugPrintTable( keys )
-	
-
 	-- The Unit that was Killed
 	local killedUnit = EntIndexToHScript( keys.entindex_killed )
 	-- The Killing entity
@@ -384,34 +382,40 @@ function Mutation:OnHeroSpawn(hero)
 		hero:AddNewModifier(hero, nil, "modifier_sticky_river", {})
 	end
 
-	if hero.tombstone_fx then
-		ParticleManager:DestroyParticle(hero.tombstone_fx, false)
-		ParticleManager:ReleaseParticleIndex(hero.tombstone_fx)
-		hero.tombstone_fx = nil
-	end
-
-	Timers:CreateTimer(FrameTime(), function()
-		if IsNearFountain(hero:GetAbsOrigin(), 1200) == false then
-			hero:SetHealth(hero:GetHealth() / 2)
-			hero:SetMana(hero:GetMana() / 2)
+	if MUTATION_LIST["positive"] == "teammate_resurrection" then
+		if hero.tombstone_fx then
+			ParticleManager:DestroyParticle(hero.tombstone_fx, false)
+			ParticleManager:ReleaseParticleIndex(hero.tombstone_fx)
+			hero.tombstone_fx = nil
 		end
-	end)
+
+		Timers:CreateTimer(FrameTime(), function()
+			if IsNearFountain(hero:GetAbsOrigin(), 1200) == false and hero.reincarnating == false then
+				hero:SetHealth(hero:GetHealth() / 2)
+				hero:SetMana(hero:GetMana() / 2)
+			end
+
+			hero.reincarnating = false
+		end)
+	end
 end
 
 function Mutation:OnHeroDeath(hero)
---	print("Mutation: On Hero Dead")
-
 	if MUTATION_LIST["positive"] == "teammate_resurrection" then
-		local newItem = CreateItem("item_tombstone", hero, hero)
-		newItem:SetPurchaseTime(0)
-		newItem:SetPurchaser(hero)
+		if hero:IsReincarnating() then
+			hero.reincarnating = true
+		else
+			local newItem = CreateItem("item_tombstone", hero, hero)
+			newItem:SetPurchaseTime(0)
+			newItem:SetPurchaser(hero)
 
-		local tombstone = SpawnEntityFromTableSynchronous("dota_item_tombstone_drop", {})
-		tombstone:SetContainedItem(newItem)
-		tombstone:SetAngles(0, RandomFloat(0, 360), 0)
-		FindClearSpaceForUnit(tombstone, hero:GetAbsOrigin(), true)
+			local tombstone = SpawnEntityFromTableSynchronous("dota_item_tombstone_drop", {})
+			tombstone:SetContainedItem(newItem)
+			tombstone:SetAngles(0, RandomFloat(0, 360), 0)
+			FindClearSpaceForUnit(tombstone, hero:GetAbsOrigin(), true)
 
-		hero.tombstone_fx = ParticleManager:CreateParticle("particles/units/heroes/hero_abaddon/holdout_borrowed_time_"..hero:GetTeamNumber()..".vpcf", PATTACH_ABSORIGIN_FOLLOW, tombstone)
+			hero.tombstone_fx = ParticleManager:CreateParticle("particles/units/heroes/hero_abaddon/holdout_borrowed_time_"..hero:GetTeamNumber()..".vpcf", PATTACH_ABSORIGIN_FOLLOW, tombstone)
+		end
 	end
 
 	if MUTATION_LIST["negative"] == "death_gold_drop" then
