@@ -1,12 +1,6 @@
 var mutation = [];
 
 function MutationPickScreen(args) {
-
-	$("#MutationsPickScreen").style.visibility = "visible";
-	$("#MutationsPickScreen").style.flowChildren = "right";
-	$("#MutationsPickScreen").style.marginTop = "31%";
-	$("#MutationsPickScreen").style.marginLeft = "46%";
-
 	mutation[1] = args["positive"]
 	mutation[2] = args["negative"]
 	mutation[3] = args["terrain"]
@@ -21,7 +15,8 @@ function MutationPickScreen(args) {
 }
 
 function StartMutationPickScreen() {
-	var mutations = CustomNetTables.GetTableValue("game_options", "mutations")
+	var mutations = CustomNetTables.GetTableValue("game_options", "mutations");
+
 	if ($("#MutationsPickScreen") != undefined && mutations != undefined)
 		MutationPickScreen(mutations);
 	else

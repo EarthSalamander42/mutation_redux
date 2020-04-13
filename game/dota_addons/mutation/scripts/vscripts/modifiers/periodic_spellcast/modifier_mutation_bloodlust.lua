@@ -7,6 +7,8 @@
 
 modifier_mutation_bloodlust = class({})
 
+function modifier_mutation_bloodlust:IsDebuff() return false end
+
 -- Add proper buff icon on toolbar
 function modifier_mutation_bloodlust:GetTexture() return "ogre_magi_bloodlust" end
 

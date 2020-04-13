@@ -10,8 +10,8 @@ function modifier_mutation_torrent:OnCreated()
 	self.delay = 1.6
 	self.radius = 225
 	local game_time = math.min(GameRules:GetDOTATime(false, false) / 60, 30)
-	self.damage = 250 + (50 * game_time)
-	self.tick_damage = 250 + (25 * game_time)
+	self.damage = 250 + (25 * game_time)
+	self.tick_damage = 100 + (10 * game_time)
 	self.pos = self:GetParent():GetAbsOrigin()
 	self.tick_count = 10
 	self.height = 400
@@ -80,20 +80,23 @@ function modifier_mutation_torrent:OnCreated()
 end
 
 function modifier_mutation_torrent:OnRemoved()
-	if IsServer() then
-		if self.particle then
-			ParticleManager:DestroyParticle(self.particle, true)
-		end
+	if not IsServer() then return end
 
-		if self.team_pfx then
-			ParticleManager:DestroyParticle(self.team_pfx, true)
-		end
+	if self.particle then
+		ParticleManager:DestroyParticle(self.particle, true)
+		ParticleManager:ReleaseParticleIndex(self.particle)
+	end
+
+	if self.team_pfx then
+		ParticleManager:DestroyParticle(self.team_pfx, true)
+		ParticleManager:ReleaseParticleIndex(self.team_pfx)
 	end
 end
 
 LinkLuaModifier("modifier_mutation_torrent_slow", "modifiers/periodic_spellcast/modifier_mutation_torrent.lua", LUA_MODIFIER_MOTION_NONE )
 
 modifier_mutation_torrent_slow = class({})
+
 function modifier_mutation_torrent_slow:GetTexture()
 	return "kunkka_torrent"
 end
@@ -102,14 +105,9 @@ function modifier_mutation_torrent_slow:IsHidden() return false end
 function modifier_mutation_torrent_slow:IsDebuff() return true end
 function modifier_mutation_torrent_slow:IsPurgable() return false end
 
-function modifier_mutation_torrent_slow:DeclareFunctions()
-	local decFuncs =
-	{
-		MODIFIER_PROPERTY_MOVESPEED_BONUS_PERCENTAGE
-	}
-
-	return decFuncs
-end
+function modifier_mutation_torrent_slow:DeclareFunctions() return {
+	MODIFIER_PROPERTY_MOVESPEED_BONUS_PERCENTAGE
+} end
 
 function modifier_mutation_torrent_slow:OnCreated()
 	self.slow = 20

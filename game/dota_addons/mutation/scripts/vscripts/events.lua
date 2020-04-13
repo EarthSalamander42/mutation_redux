@@ -8,6 +8,11 @@ function Mutation:OnGameRulesStateChange(keys)
 		--Timers:RemoveTimer("alljointimer")
 	elseif newState == DOTA_GAMERULES_STATE_WAIT_FOR_PLAYERS_TO_LOAD then
 		self.bSeenWaitForPlayers = true
+	elseif newState == DOTA_GAMERULES_STATE_CUSTOM_GAME_SETUP then
+		Timers:CreateTimer(2.0, function()
+			SendToServerConsole('sm_gmode 1')
+			SendToServerConsole('dota_bot_populate')
+		end)
 	elseif newState == DOTA_GAMERULES_STATE_HERO_SELECTION then
 		self:PostLoadPrecache()
 	elseif GameRules:State_Get() == DOTA_GAMERULES_STATE_PRE_GAME then
@@ -393,6 +398,7 @@ function Mutation:OnHeroSpawn(hero)
 			if IsNearFountain(hero:GetAbsOrigin(), 1200) == false and hero.reincarnating == false then
 				hero:SetHealth(hero:GetHealth() / 2)
 				hero:SetMana(hero:GetMana() / 2)
+				hero:EmitSound("Ability.ReincarnationAlt")
 			end
 
 			hero.reincarnating = false
@@ -419,14 +425,16 @@ function Mutation:OnHeroDeath(hero)
 	end
 
 	if MUTATION_LIST["negative"] == "death_gold_drop" then
-		local newItem = CreateItem("item_bag_of_gold", nil, nil)
-		newItem:SetPurchaseTime(0)
-		newItem:SetCurrentCharges((hero:GetGold() / 100 * DEATH_GOLD_DROP_PCT) + DEATH_GOLD_DROP_FLAT)
+		if not hero:IsReincarnating() then
+			local newItem = CreateItem("item_bag_of_gold", nil, nil)
+			newItem:SetPurchaseTime(0)
+			newItem:SetCurrentCharges((hero:GetGold() / 100 * DEATH_GOLD_DROP_PCT) + DEATH_GOLD_DROP_FLAT)
 
-		local drop = CreateItemOnPositionSync(hero:GetAbsOrigin(), newItem)
-		local dropTarget = hero:GetAbsOrigin() + RandomVector(RandomFloat( 50, 150 ))
-		newItem:LaunchLoot(true, 300, 0.75, dropTarget)
-		EmitSoundOn("Dungeon.TreasureItemDrop", hero)
+			local drop = CreateItemOnPositionSync(hero:GetAbsOrigin(), newItem)
+			local dropTarget = hero:GetAbsOrigin() + RandomVector(RandomFloat( 50, 150 ))
+			newItem:LaunchLoot(true, 300, 0.75, dropTarget)
+			EmitSoundOn("Dungeon.TreasureItemDrop", hero)
+		end
 	end
 end
 

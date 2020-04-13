@@ -1,5 +1,5 @@
-#Main {
-	width: 400px;
+.Main {
+	width: 100%;
 }
 
 #Mutations
@@ -8,6 +8,13 @@
 	box-shadow: none;
 	margin-top: 120px;
 	visibility: collapse;
+}
+
+#MutationsPickScreen
+{
+	margin-top: 120px;
+	horizontal-align: center;
+	flow-children: right;
 }
 
 .DotaMutations

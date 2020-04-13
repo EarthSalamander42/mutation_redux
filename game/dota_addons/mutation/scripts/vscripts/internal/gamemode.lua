@@ -27,7 +27,10 @@ function Mutation:_InitGameMode()
 
 	GameRules:SetCustomGameEndDelay( GAME_END_DELAY )
 	GameRules:SetCustomVictoryMessageDuration( VICTORY_MESSAGE_DURATION )
-	GameRules:SetStartingGold( STARTING_GOLD )
+
+	if STARTING_GOLD ~= -1 then
+		GameRules:SetStartingGold( STARTING_GOLD )
+	end
 
 	if SKIP_TEAM_SETUP then
 		GameRules:SetCustomGameSetupAutoLaunchDelay( 0 )

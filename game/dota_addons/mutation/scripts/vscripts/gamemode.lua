@@ -32,11 +32,14 @@ function Mutation:InitGameMode()
 	GameRules:SetCustomGameSetupAutoLaunchDelay(5.0)
 	GameRules:SetShowcaseTime(0.0)
 
+	local mode = GameRules:GetGameModeEntity()
+	mode:SetFreeCourierModeEnabled(USE_MULTIPLE_COURIERS)
+
 	-- Selecting Mutations (Take out if statement for IsInToolsMode if you want to test randomized)
 	if IsInToolsMode() then
-		MUTATION_LIST["positive"] = "teammate_resurrection"
-		MUTATION_LIST["negative"] = NEGATIVE_MUTATION_LIST[3]
-		MUTATION_LIST["terrain"] = TERRAIN_MUTATION_LIST[7]
+		MUTATION_LIST["positive"] = "killstreak_power"
+		MUTATION_LIST["negative"] = "periodic_spellcast"
+		MUTATION_LIST["terrain"] = "fast_runes"
 	else
 		Mutation:ChooseMutation("positive", POSITIVE_MUTATION_LIST)
 		Mutation:ChooseMutation("negative", NEGATIVE_MUTATION_LIST)
