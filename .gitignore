@@ -1,21 +1,3 @@
-# Add any directories, files, or patterns you don't want to be tracked by version control
-# Add any directories, files, or patterns you don't want to be tracked by version control
-# Ignore everything
-/*
-
-# Except the relevant folders
-!content/
-content/*
-!content/dota_addons/
-content/dota_addons/*
-!content/dota_addons/mutation/
-
-!game/
-game/*
-!game/dota_addons/
-game/dota_addons/*
-!game/dota_addons/mutation/
-
 # Cache crap that Valve autogenerates
 *.bin
 *.cfg
@@ -46,10 +28,13 @@ resource/overviews/*
 *.stackdump
 
 game/dota_addons/mutation/rich_presence_persistent_data\.txt
-
 game/dota_addons/mutation/server_log\.txt
 
 # eclipse
 .project
 .settings
 .DS_Store
+
+# node
+node_modules/*
+package-lock.json
