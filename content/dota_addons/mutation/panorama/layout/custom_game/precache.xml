@@ -1,9 +1,0 @@
-<root>
-	<Panel style="visibility:collapse;">
-		<Panel id="container" style="visibility:collapse;">
-		<!--
-			<Image src="file://panorama/images/custom_game/loading_screen/gamemode.png" hittest="false" />
-		-->
-		</Panel>
-	</Panel>
-</root>
