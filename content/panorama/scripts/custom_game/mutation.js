@@ -12,9 +12,9 @@ function Mutation(args) {
 	if (args["terrain"])
 		mutation[3] = args["terrain"];
 
-	$("#Mutation1Label").text = $.Localize("mutation_" + mutation[1]);
-	$("#Mutation2Label").text = $.Localize("mutation_" + mutation[2]);
-	$("#Mutation3Label").text = $.Localize("mutation_" + mutation[3]);
+	$("#Mutation1Label").text = $.Localize("#mutation_" + mutation[1]);
+	$("#Mutation2Label").text = $.Localize("#mutation_" + mutation[2]);
+	$("#Mutation3Label").text = $.Localize("#mutation_" + mutation[3]);
 
 	for (var j = 1; j <= 3; j++) {
 		SetMutationTooltip(j);

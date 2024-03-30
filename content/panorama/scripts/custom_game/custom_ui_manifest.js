@@ -28,5 +28,3 @@ var Parent = $.GetContextPanel().GetParent().GetParent();
 Parent.FindChildTraverse("LevelLabel").style.width = "50px";
 
 $.GetContextPanel().GetParent().GetParent().FindChildTraverse("PreGame").FindChildTraverse("Header").style.visibility = "visible";
-
-$.Msg("hi");

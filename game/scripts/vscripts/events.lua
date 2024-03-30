@@ -13,8 +13,12 @@ function Mutation:OnGameRulesStateChange(keys)
 			SendToServerConsole('sm_gmode 1')
 			SendToServerConsole('dota_bot_populate')
 		end)
+
+		CustomGameEventManager:Send_ServerToAllClients("all_players_loaded", {})
 	elseif newState == DOTA_GAMERULES_STATE_HERO_SELECTION then
 		self:PostLoadPrecache()
+	elseif newState == DOTA_GAMERULES_STATE_STRATEGY_TIME then
+		self:ForceAssignHeroes()
 	elseif GameRules:State_Get() == DOTA_GAMERULES_STATE_PRE_GAME then
 		if MUTATION_LIST["terrain"] == "no_trees" then
 			GameRules:SetTreeRegrowTime(99999)
@@ -36,7 +40,7 @@ function Mutation:OnGameRulesStateChange(keys)
 		end
 
 		if MUTATION_LIST["negative"] == "periodic_spellcast" then
-			local buildings = FindUnitsInRadius(DOTA_TEAM_GOODGUYS, Vector(0,0,0), nil, 20000, DOTA_UNIT_TARGET_TEAM_BOTH, DOTA_UNIT_TARGET_BUILDING, DOTA_UNIT_TARGET_FLAG_INVULNERABLE, FIND_ANY_ORDER, false)
+			local buildings = FindUnitsInRadius(DOTA_TEAM_GOODGUYS, Vector(0, 0, 0), nil, 20000, DOTA_UNIT_TARGET_TEAM_BOTH, DOTA_UNIT_TARGET_BUILDING, DOTA_UNIT_TARGET_FLAG_INVULNERABLE, FIND_ANY_ORDER, false)
 			local good_fountain = nil
 			local bad_fountain = nil
 
@@ -63,7 +67,7 @@ function Mutation:OnGameRulesStateChange(keys)
 				end
 
 				random_int = RandomInt(1, #table)
-				Notifications:TopToAll({text = table[random_int][2].." Mutation in 5 seconds...", duration = 5.0, style = {color = table[random_int][3]}})
+				Notifications:TopToAll({ text = table[random_int][2] .. " Mutation in 5 seconds...", duration = 5.0, style = { color = table[random_int][3] } })
 
 				return 60.0
 			end)
@@ -71,7 +75,7 @@ function Mutation:OnGameRulesStateChange(keys)
 			Timers:CreateTimer(60.0, function()
 				if bad_fountain == nil or good_fountain == nil then
 					log.error("nao cucekd up!!! ")
-					return 60.0 
+					return 60.0
 				end
 
 				for _, hero in pairs(HeroList:GetAllHeroes()) do
@@ -79,7 +83,7 @@ function Mutation:OnGameRulesStateChange(keys)
 						caster = good_fountain
 					end
 
-					hero:AddNewModifier(caster, caster, "modifier_mutation_"..table[random_int][1], {duration=table[random_int][4]})
+					hero:AddNewModifier(caster, caster, "modifier_mutation_" .. table[random_int][1], { duration = table[random_int][4] })
 				end
 				counter = counter + 1
 
@@ -89,18 +93,18 @@ function Mutation:OnGameRulesStateChange(keys)
 
 		if MUTATION_LIST["terrain"] == "gift_exchange" then
 			for k, v in pairs(LoadKeyValues("scripts/npc/items.txt")) do -- Go through all the items in KeyValues.ItemKV and store valid items in validItems table
-				varFlag = 0 -- Let's borrow this memory to suss out the forbidden items first...
+				varFlag = 0                                     -- Let's borrow this memory to suss out the forbidden items first...
 
 				if k ~= "Version" and v["ItemCost"] and v["ItemCost"] >= minValue and v["ItemCost"] ~= 99999 and not string.find(k, "recipe") and not string.find(k, "cheese") then
---					for _, item in pairs(self.restricted_items) do -- Make sure item isn't a restricted item
---						if k == item then
---							varFlag = 1
---						end
---					end
+					--					for _, item in pairs(self.restricted_items) do -- Make sure item isn't a restricted item
+					--						if k == item then
+					--							varFlag = 1
+					--						end
+					--					end
 
 					if varFlag == 0 then -- If not a restricted item (while still meeting all the other criteria...)
-						validItems[#validItems + 1] = {k = k, v = v["ItemCost"]}
-					end	
+						validItems[#validItems + 1] = { k = k, v = v["ItemCost"] }
+					end
 				end
 			end
 
@@ -115,14 +119,15 @@ function Mutation:OnGameRulesStateChange(keys)
 					print('\t', key, value)
 				end
 			end	
-			]]--
+			]]
+			--
 
 			varFlag = 0
 
 			-- Create Tier 1 Table
 			repeat
 				if validItems[counter].v <= t1cap then
-					tier1[#tier1 + 1] = {k = validItems[counter].k, v = validItems[counter].v}
+					tier1[#tier1 + 1] = { k = validItems[counter].k, v = validItems[counter].v }
 					counter = counter + 1
 				else
 					varFlag = 1
@@ -134,7 +139,7 @@ function Mutation:OnGameRulesStateChange(keys)
 			-- Create Tier 2 Table
 			repeat
 				if validItems[counter].v <= t2cap then
-					tier2[#tier2 + 1] = {k = validItems[counter].k, v = validItems[counter].v}
+					tier2[#tier2 + 1] = { k = validItems[counter].k, v = validItems[counter].v }
 					counter = counter + 1
 				else
 					varFlag = 1
@@ -146,7 +151,7 @@ function Mutation:OnGameRulesStateChange(keys)
 			-- Create Tier 3 Table
 			repeat
 				if validItems[counter].v <= t3cap then
-					tier3[#tier3 + 1] = {k = validItems[counter].k, v = validItems[counter].v}
+					tier3[#tier3 + 1] = { k = validItems[counter].k, v = validItems[counter].v }
 					counter = counter + 1
 				else
 					varFlag = 1
@@ -157,7 +162,7 @@ function Mutation:OnGameRulesStateChange(keys)
 
 			-- Create Tier 4 Table
 			for num = counter, #validItems do
-				tier4[#tier4 + 1] = {k = validItems[num].k, v = validItems[num].v}
+				tier4[#tier4 + 1] = { k = validItems[num].k, v = validItems[num].v }
 			end
 
 			varFlag = 0
@@ -198,7 +203,8 @@ function Mutation:OnGameRulesStateChange(keys)
 					print('\t', key, value)
 				end
 			end	
-			]]--
+			]]
+			--
 
 			Timers:CreateTimer(110.0, function()
 				Mutation:SpawnRandomItem()
@@ -250,8 +256,8 @@ function Mutation:OnGameRulesStateChange(keys)
 									unit:EmitSound("Wormhole.CreepAppear")
 								end)
 							end
-							unit:AddNewModifier(unit, nil, "modifier_mutation_wormhole_cooldown", {duration = MUTATION_LIST_WORMHOLE_PREVENT_DURATION})
-							FindClearSpaceForUnit(unit, current_wormholes[13-i], true)
+							unit:AddNewModifier(unit, nil, "modifier_mutation_wormhole_cooldown", { duration = MUTATION_LIST_WORMHOLE_PREVENT_DURATION })
+							FindClearSpaceForUnit(unit, current_wormholes[13 - i], true)
 							if unit.GetPlayerID and unit:GetPlayerID() then
 								PlayerResource:SetCameraTarget(unit:GetPlayerID(), unit)
 								Timers:CreateTimer(0.03, function()
@@ -299,7 +305,7 @@ function Mutation:OnNPCSpawned(keys)
 
 	if MUTATION_LIST["terrain"] == "speed_freaks" then
 		if not npc:IsBuilding() then
-			npc:AddNewModifier(npc, nil, "modifier_mutation_speed_freaks", {projectile_speed = SPEED_FREAKS_PROJECTILE_SPEED, movespeed_pct = SPEED_FREAKS_MOVESPEED_PCT, max_movespeed = SPEED_FREAKS_MAX_MOVESPEED})
+			npc:AddNewModifier(npc, nil, "modifier_mutation_speed_freaks", { projectile_speed = SPEED_FREAKS_PROJECTILE_SPEED, movespeed_pct = SPEED_FREAKS_MOVESPEED_PCT, max_movespeed = SPEED_FREAKS_MAX_MOVESPEED })
 		end
 	end
 
@@ -308,7 +314,7 @@ function Mutation:OnNPCSpawned(keys)
 		if not Mutation:IsEligibleHero(npc) then return end
 
 		if npc.first_spawn == nil then
---			print("Mutation: On Hero First Spawn")
+			--			print("Mutation: On Hero First Spawn")
 
 			if MUTATION_LIST["positive"] == "killstreak_power" then
 				npc:AddNewModifier(npc, nil, "modifier_mutation_kill_streak_power", {})
@@ -344,21 +350,21 @@ function Mutation:OnNPCSpawned(keys)
 end
 
 -- An entity died
-function Mutation:OnEntityKilled( keys )
+function Mutation:OnEntityKilled(keys)
 	-- The Unit that was Killed
-	local killedUnit = EntIndexToHScript( keys.entindex_killed )
+	local killedUnit = EntIndexToHScript(keys.entindex_killed)
 	-- The Killing entity
 	local killerEntity = nil
 
 	if keys.entindex_attacker ~= nil then
-		killerEntity = EntIndexToHScript( keys.entindex_attacker )
+		killerEntity = EntIndexToHScript(keys.entindex_attacker)
 	end
 
 	-- The ability/item used to kill, or nil if not killed by an item/ability
 	local killerAbility = nil
 
 	if keys.entindex_inflictor ~= nil then
-		killerAbility = EntIndexToHScript( keys.entindex_inflictor )
+		killerAbility = EntIndexToHScript(keys.entindex_inflictor)
 	end
 
 	local damagebits = keys.damagebits -- This might always be 0 and therefore useless
@@ -371,7 +377,7 @@ function Mutation:OnEntityKilled( keys )
 end
 
 function Mutation:OnHeroSpawn(hero)
---	print("Mutation: On Hero Spawn")
+	--	print("Mutation: On Hero Spawn")
 
 	if MUTATION_LIST["positive"] == "damage_reduction" then
 		hero:AddNewModifier(hero, nil, "modifier_mutation_damage_reduction", {})
@@ -420,7 +426,7 @@ function Mutation:OnHeroDeath(hero)
 			tombstone:SetAngles(0, RandomFloat(0, 360), 0)
 			FindClearSpaceForUnit(tombstone, hero:GetAbsOrigin(), true)
 
-			hero.tombstone_fx = ParticleManager:CreateParticle("particles/units/heroes/hero_abaddon/holdout_borrowed_time_"..hero:GetTeamNumber()..".vpcf", PATTACH_ABSORIGIN_FOLLOW, tombstone)
+			hero.tombstone_fx = ParticleManager:CreateParticle("particles/units/heroes/hero_abaddon/holdout_borrowed_time_" .. hero:GetTeamNumber() .. ".vpcf", PATTACH_ABSORIGIN_FOLLOW, tombstone)
 		end
 	end
 
@@ -431,7 +437,7 @@ function Mutation:OnHeroDeath(hero)
 			newItem:SetCurrentCharges((hero:GetGold() / 100 * DEATH_GOLD_DROP_PCT) + DEATH_GOLD_DROP_FLAT)
 
 			local drop = CreateItemOnPositionSync(hero:GetAbsOrigin(), newItem)
-			local dropTarget = hero:GetAbsOrigin() + RandomVector(RandomFloat( 50, 150 ))
+			local dropTarget = hero:GetAbsOrigin() + RandomVector(RandomFloat(50, 150))
 			newItem:LaunchLoot(true, 300, 0.75, dropTarget)
 			EmitSoundOn("Dungeon.TreasureItemDrop", hero)
 		end
@@ -460,7 +466,7 @@ end
 -- state as necessary
 function Mutation:OnPlayerReconnect(keys)
 	DebugPrint( '[BAREBONES] OnPlayerReconnect' )
-	DebugPrintTable(keys) 
+	DebugPrintTable(keys)
 end
 
 -- An item was purchased by a player
@@ -473,7 +479,7 @@ function Mutation:OnItemPurchased( keys )
 	if not plyID then return end
 
 	-- The name of the item purchased
-	local itemName = keys.itemname 
+	local itemName = keys.itemname
 	
 	-- The cost of the item purchased
 	local itemcost = keys.itemcost
@@ -606,7 +612,7 @@ function Mutation:OnTeamKillCredit(keys)
 	local killerTeamNumber = keys.teamnumber
 end
 
--- This function is called 1 to 2 times as the player connects initially but before they 
+-- This function is called 1 to 2 times as the player connects initially but before they
 -- have completely connected
 function Mutation:PlayerConnect(keys)
 	DebugPrint('[BAREBONES] PlayerConnect')
@@ -645,7 +651,7 @@ function Mutation:OnItemCombined(keys)
 	local player = PlayerResource:GetPlayer(plyID)
 
 	-- The name of the item purchased
-	local itemName = keys.itemname 
+	local itemName = keys.itemname
 	
 	-- The cost of the item purchased
 	local itemcost = keys.itemcost
@@ -670,7 +676,7 @@ function Mutation:OnTowerKill(keys)
 	local team = keys.teamnumber
 end
 
--- This function is called whenever a player changes there custom team selection during Game Setup 
+-- This function is called whenever a player changes there custom team selection during Game Setup
 function Mutation:OnPlayerSelectedCustomTeam(keys)
 	DebugPrint('[BAREBONES] OnPlayerSelectedCustomTeam')
 	DebugPrintTable(keys)

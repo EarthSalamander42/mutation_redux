@@ -3,7 +3,7 @@ BAREBONES_VERSION = "1.00"
 
 -- Set this to true if you want to see a complete debug output of all events/processes done by barebones
 -- You can also change the cvar 'barebones_spew' at any time to 1 or 0 for output/no output
-BAREBONES_DEBUG_SPEW = false 
+BAREBONES_DEBUG_SPEW = false
 
 if Mutation == nil then
 	_G.Mutation = class({})
@@ -14,6 +14,10 @@ if Mutation == nil then
 	MUTATION_LIST["terrain"] = ""
 end
 
+-- clientside KV loading
+require('addon_init')
+
+require('libraries/adv_log')
 require('libraries/timers')
 require('libraries/notifications')
 
@@ -28,38 +32,41 @@ end
 
 function Mutation:InitGameMode()
 	GameRules:GetGameModeEntity():SetItemAddedToInventoryFilter(Dynamic_Wrap(self, "ItemAddedFilter"), self)
-	GameRules:LockCustomGameSetupTeamAssignment(true)
-	GameRules:SetCustomGameSetupAutoLaunchDelay(5.0)
-	GameRules:SetShowcaseTime(0.0)
+
+	-- GameRules:SetShowcaseTime(0.0)
 
 	local mode = GameRules:GetGameModeEntity()
 	mode:SetFreeCourierModeEnabled(USE_MULTIPLE_COURIERS)
+	mode:SetUseDefaultDOTARuneSpawnLogic(true)
+	mode:SetBotThinkingEnabled(true)
 
-	-- Selecting Mutations (Take out if statement for IsInToolsMode if you want to test randomized)
-	if IsInToolsMode() then
-		MUTATION_LIST["positive"] = "killstreak_power"
-		MUTATION_LIST["negative"] = "periodic_spellcast"
-		MUTATION_LIST["terrain"] = "fast_runes"
-	else
-		Mutation:ChooseMutation("positive", POSITIVE_MUTATION_LIST)
-		Mutation:ChooseMutation("negative", NEGATIVE_MUTATION_LIST)
-		Mutation:ChooseMutation("terrain", TERRAIN_MUTATION_LIST)
-	end
+	CustomGameEventManager:RegisterListener("setting_vote", Dynamic_Wrap(Mutation, "OnSettingVote"))
+
+	Mutation:ChooseMutation("positive", POSITIVE_MUTATION_LIST[1])
+	Mutation:ChooseMutation("negative", NEGATIVE_MUTATION_LIST[1])
+	Mutation:ChooseMutation("terrain", TERRAIN_MUTATION_LIST[1])
 
 	CustomNetTables:SetTableValue("game_options", "mutations", MUTATION_LIST)
 
---	"telekinesis",
---	"glimpse",
+	--	"telekinesis",
+	--	"glimpse",
 
---	"shallow_grave",
---	"false_promise",
---	"bloodrage",
+	--	"shallow_grave",
+	--	"false_promise",
+	--	"bloodrage",
 end
 
-function Mutation:ChooseMutation(mType, mList)
+-- TODO: add a random choice in vote UI, if random is selected, then use this function to pick a random mutation
+function Mutation:RandomMutation(mType, mList)
 	local random_int = RandomInt(1, #mList)
 	MUTATION_LIST[mType] = mList[random_int]
 	--print("MUTATION_LIST["..mType.."] mutation picked: ", mList[random_int])
+end
+
+function Mutation:ChooseMutation(mType, mName)
+	MUTATION_LIST[mType] = mName
+	print("MUTATION_LIST[" .. mType .. "] mutation picked: " .. mName)
+	CustomNetTables:SetTableValue("game_options", "mutations", MUTATION_LIST)
 end
 
 function Mutation:RevealAllMap(duration)
@@ -74,7 +81,7 @@ end
 
 -- Currently only checks stuff for monkey king
 function Mutation:IsEligibleHero(hero)
-	if(hero:GetName() == "npc_dota_hero_monkey_king" or hero:GetName() == "npc_dota_hero_rubick") and hero:GetAbsOrigin() ~= Vector(0,0,0) then 
+	if (hero:GetName() == "npc_dota_hero_monkey_king" or hero:GetName() == "npc_dota_hero_rubick") and hero:GetAbsOrigin() ~= Vector(0, 0, 0) then
 		print("fake hero entered the game, ignoring mutation!", hero:GetEntityIndex(), hero:GetName())
 		return false
 	end
@@ -83,7 +90,7 @@ function Mutation:IsEligibleHero(hero)
 end
 
 function Mutation:SpawnRandomItem()
-	local selectedItem 
+	local selectedItem
 
 	if GameRules:GetDOTATime(false, false) > t3time then
 		selectedItem = tier4[RandomInt(1, #tier4)].k
@@ -117,8 +124,8 @@ function Mutation:SpawnRandomItem()
 
 		local drop = CreateItemOnPositionSync(pos, item)
 
-		CustomGameEventManager:Send_ServerToAllClients("item_has_spawned", {spawn_location = pos})
-		EmitGlobalSound( "powerup_05" )
+		CustomGameEventManager:Send_ServerToAllClients("item_has_spawned", { spawn_location = pos })
+		EmitGlobalSound("powerup_05")
 
 		ParticleManager:DestroyParticle(particle_arena_fx, false)
 		ParticleManager:ReleaseParticleIndex(particle_arena_fx)
@@ -126,13 +133,12 @@ function Mutation:SpawnRandomItem()
 		particle_dummy:ForceKill(false)
 	end)
 
-	CustomGameEventManager:Send_ServerToAllClients("item_will_spawn", {spawn_location = pos})
+	CustomGameEventManager:Send_ServerToAllClients("item_will_spawn", { spawn_location = pos })
 	EmitGlobalSound("powerup_03")
 end
 
 -- Item added to inventory filter
-function Mutation:ItemAddedFilter( keys )
-
+function Mutation:ItemAddedFilter(keys)
 	-- Typical keys:
 	-- inventory_parent_entindex_const: 852
 	-- item_entindex_const: 1519
@@ -161,31 +167,31 @@ end
 function Mutation:UltimateLevel()
 	local XP_PER_LEVEL_TABLE = {}
 	-- Vanilla
-	XP_PER_LEVEL_TABLE[1] =		0		-- +0
-	XP_PER_LEVEL_TABLE[2] =		200		-- +200
-	XP_PER_LEVEL_TABLE[3] =		600		-- +400
-	XP_PER_LEVEL_TABLE[4] =		1080	-- +480
-	XP_PER_LEVEL_TABLE[5] =		1680	-- +600
-	XP_PER_LEVEL_TABLE[6] =		2300	-- +620
-	XP_PER_LEVEL_TABLE[7] =		2940	-- +640
-	XP_PER_LEVEL_TABLE[8] =		3600	-- +660
-	XP_PER_LEVEL_TABLE[9] =		4280	-- +680
-	XP_PER_LEVEL_TABLE[10] =	5080	-- +800
-	XP_PER_LEVEL_TABLE[11] =	5900	-- +820
-	XP_PER_LEVEL_TABLE[12] =	6740	-- +840
-	XP_PER_LEVEL_TABLE[13] =	7640	-- +900
-	XP_PER_LEVEL_TABLE[14] =	8865	-- +1225
-	XP_PER_LEVEL_TABLE[15] =	10115	-- +1250
-	XP_PER_LEVEL_TABLE[16] =	11390	-- +1275
-	XP_PER_LEVEL_TABLE[17] =	12690	-- +1300
-	XP_PER_LEVEL_TABLE[18] =	14015	-- +1325
-	XP_PER_LEVEL_TABLE[19] =	15415	-- +1400
-	XP_PER_LEVEL_TABLE[20] =	16905	-- +1490
-	XP_PER_LEVEL_TABLE[21] =	18405	-- +1500
-	XP_PER_LEVEL_TABLE[22] =	20155	-- +1750
-	XP_PER_LEVEL_TABLE[23] =	22155	-- +2000
-	XP_PER_LEVEL_TABLE[24] =	24405	-- +2250
-	XP_PER_LEVEL_TABLE[25] =	26905	-- +2500
+	XP_PER_LEVEL_TABLE[1] = 0   -- +0
+	XP_PER_LEVEL_TABLE[2] = 200 -- +200
+	XP_PER_LEVEL_TABLE[3] = 600 -- +400
+	XP_PER_LEVEL_TABLE[4] = 1080 -- +480
+	XP_PER_LEVEL_TABLE[5] = 1680 -- +600
+	XP_PER_LEVEL_TABLE[6] = 2300 -- +620
+	XP_PER_LEVEL_TABLE[7] = 2940 -- +640
+	XP_PER_LEVEL_TABLE[8] = 3600 -- +660
+	XP_PER_LEVEL_TABLE[9] = 4280 -- +680
+	XP_PER_LEVEL_TABLE[10] = 5080 -- +800
+	XP_PER_LEVEL_TABLE[11] = 5900 -- +820
+	XP_PER_LEVEL_TABLE[12] = 6740 -- +840
+	XP_PER_LEVEL_TABLE[13] = 7640 -- +900
+	XP_PER_LEVEL_TABLE[14] = 8865 -- +1225
+	XP_PER_LEVEL_TABLE[15] = 10115 -- +1250
+	XP_PER_LEVEL_TABLE[16] = 11390 -- +1275
+	XP_PER_LEVEL_TABLE[17] = 12690 -- +1300
+	XP_PER_LEVEL_TABLE[18] = 14015 -- +1325
+	XP_PER_LEVEL_TABLE[19] = 15415 -- +1400
+	XP_PER_LEVEL_TABLE[20] = 16905 -- +1490
+	XP_PER_LEVEL_TABLE[21] = 18405 -- +1500
+	XP_PER_LEVEL_TABLE[22] = 20155 -- +1750
+	XP_PER_LEVEL_TABLE[23] = 22155 -- +2000
+	XP_PER_LEVEL_TABLE[24] = 24405 -- +2250
+	XP_PER_LEVEL_TABLE[25] = 26905 -- +2500
 
 	GameRules:GetGameModeEntity():SetUseCustomHeroLevels(true)
 	GameRules:GetGameModeEntity():SetCustomXPRequiredToReachNextLevel(XP_PER_LEVEL_TABLE)
@@ -196,11 +202,92 @@ function Mutation:UltimateLevel()
 			if j >= ULTIMATE_LEVEL then return end
 			print(j)
 			for i = j, j + 2 do
-				XP_PER_LEVEL_TABLE[i] = XP_PER_LEVEL_TABLE[i-1] + 2500
+				XP_PER_LEVEL_TABLE[i] = XP_PER_LEVEL_TABLE[i - 1] + 2500
 				GameRules:GetGameModeEntity():SetCustomXPRequiredToReachNextLevel(XP_PER_LEVEL_TABLE)
 			end
 			j = j + 2
 			return 1.0
 		end)
+	end
+end
+
+-- new system, double votes for donators
+ListenToGameEvent('game_rules_state_change', function(keys)
+	if GameRules:State_Get() == DOTA_GAMERULES_STATE_HERO_SELECTION then
+		if Mutation.VoteTable == nil then return end
+		local votes = Mutation.VoteTable
+
+		for category, pidVoteTable in pairs(votes) do
+			-- Tally the votes into a new table
+			local voteCounts = {}
+			for pid, vote in pairs(pidVoteTable) do
+				local gamemode = vote[1]
+				local vote_count = vote[2]
+				if not voteCounts[vote[1]] then voteCounts[vote[1]] = 0 end
+				--				print(pid, vote[1], vote[2])
+				voteCounts[vote[1]] = voteCounts[vote[1]] + vote[2]
+			end
+
+			-- Find the key that has the highest value (key=vote value, value=number of votes)
+			local highest_vote = 0
+			local highest_key = ""
+			for k, v in pairs(voteCounts) do
+				--				print(k, v)
+				if v > highest_vote then
+					highest_key = k
+					highest_vote = v
+				end
+			end
+
+			-- Check for a tie by counting how many values have the highest number of votes
+			local tieTable = {}
+			for k, v in pairs(voteCounts) do
+				-- print(k, v)
+				if v == highest_vote then
+					table.insert(tieTable, tonumber(k))
+				end
+			end
+
+			-- Resolve a tie by selecting a random value from those with the highest votes
+			if table.getn(tieTable) > 1 then
+				--				print("Vote System: TIE!")
+				highest_key = tieTable[math.random(table.getn(tieTable))]
+			end
+
+			-- Act on the winning vote
+			Mutation:ChooseMutation(category, highest_key)
+			print(category .. ": " .. highest_key)
+		end
+	end
+end, nil)
+
+function Mutation:OnSettingVote(keys)
+	local pid = keys.PlayerID
+	print(keys)
+
+	if not Mutation.VoteTable then Mutation.VoteTable = {} end
+	if not Mutation.VoteTable[keys.category] then Mutation.VoteTable[keys.category] = {} end
+
+	if pid >= 0 then
+		if not Mutation.VoteTable[keys.category][pid] then Mutation.VoteTable[keys.category][pid] = {} end
+
+		Mutation.VoteTable[keys.category][pid][1] = keys.vote
+		Mutation.VoteTable[keys.category][pid][2] = 1
+	end
+
+	--	Say(nil, keys.category, false)
+	--	Say(nil, tostring(keys.vote), false)
+
+	-- TODO: Finish votes show up
+	CustomGameEventManager:Send_ServerToAllClients("send_votes", { category = keys.category, vote = keys.vote, table = Mutation.VoteTable[keys.category] })
+end
+
+function Mutation:ForceAssignHeroes()
+	for nPlayerID = 0, (DOTA_MAX_TEAM_PLAYERS - 1) do
+		local hPlayer = PlayerResource:GetPlayer(nPlayerID)
+
+		if hPlayer and not PlayerResource:HasSelectedHero(nPlayerID) then
+			hPlayer:MakeRandomHeroSelection()
+		end
 	end
 end

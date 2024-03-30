@@ -19,10 +19,15 @@
 	"OverthrowTextPickup"							"HAS PICKED UP"
 	"OverthrowItemPickup"							"{s:item_id}!"
 
+	"mutation_title"								"Mutation Vote"
+	"positive_mutation"								"Positive Mutation"
+	"negative_mutation"								"Negative Mutation"
+	"terrain_mutation"								"Terrain Mutation"
+
 	// Mutation
 	//Positive
 	"mutation_killstreak_power"						"Killstreak Power"
-	"mutation_killstreak_power_Description"			"Each kill increases damage done and taken by 20%%. Resets on death."
+	"mutation_killstreak_power_Description"			"Each kill increases damage done and taken by 20%. Resets on death."
 
 	"mutation_teammate_resurrection"				"Teammate Resurrection"
 	"mutation_teammate_resurrection_Description"	"Players can resurrect teammates by clicking on their tombstone and channeling."

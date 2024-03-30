@@ -5,7 +5,34 @@
 
 	<styles>
 		<include src="file://{resources}/styles/custom_game/custom_loading_screen.css" />
+		<include src="s2r://panorama/styles/dotastyles.vcss_c" />
 	</styles>
+
+	<snippets>
+		<snippet name="MutationVotePositiveSnippet">
+			<Panel class="MutationVote">
+				<RadioButton group="positive" class="MutationVote">
+					<Label id="MutationVoteText" text="" />
+				</RadioButton>
+			</Panel>
+		</snippet>
+
+		<snippet name="MutationVoteNegativeSnippet">
+			<Panel class="MutationVote">
+				<RadioButton group="negative" class="MutationVote">
+					<Label id="MutationVoteText" text="" />
+				</RadioButton>
+			</Panel>
+		</snippet>
+
+		<snippet name="MutationVoteTerrainSnippet">
+			<Panel class="MutationVote">
+				<RadioButton group="terrain" class="MutationVote">
+					<Label id="MutationVoteText" text="" />
+				</RadioButton>
+			</Panel>
+		</snippet>
+	</snippets>
 
 	<Panel class="AddonLoadingRoot">
 		<Panel id="CustomBg" >
@@ -14,6 +41,35 @@
 
 		<Panel id="TitlePanel"> 
 			<Label id="AddonTitle" text="#addon_game_name" />
+		</Panel>
+
+		<Label id="MutationTitle" class="MutationVoteTitle VoteContainer" text="#mutation_title" />
+
+		<!-- Vote for 3 different mutations: postitive mutation, negative mutation and terrain mutation -->
+		<Panel class="MainVoteContainer">
+			<Panel id="VoteContainerPositive" class="VoteContainer">
+				<Label id="MutationVoteTitlePositive" class="MutationVoteTitle" text="#positive_mutation" />
+
+				<Panel id="MutationVotePositive" class="MutationVoteContainer">
+					<!-- Filled dynamically through JS -->
+				</Panel>
+			</Panel>
+
+			<Panel id="VoteContainerNegative" class="VoteContainer">
+				<Label id="MutationVoteTitleNegative" class="MutationVoteTitle" text="#negative_mutation" />
+
+				<Panel id="MutationVoteNegative" class="MutationVoteContainer">
+					<!-- Filled dynamically through JS -->
+				</Panel>
+			</Panel>
+
+			<Panel id="VoteContainerTerrain" class="VoteContainer">
+				<Label id="MutationVoteTitleTerrain" class="MutationVoteTitle" text="#terrain_mutation" />
+
+				<Panel id="MutationVoteTerrain" class="MutationVoteContainer">
+					<!-- Filled dynamically through JS -->
+				</Panel>
+			</Panel>
 		</Panel>
 	</Panel>
 </root>

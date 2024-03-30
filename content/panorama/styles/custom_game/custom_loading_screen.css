@@ -34,3 +34,96 @@
 	overflow: clip;
 	pre-transform-scale2d: 1.0;
 }
+
+/* Mutation vote */
+
+.MainVoteContainer
+{
+	horizontal-align: left;
+	vertical-align: top;
+	margin-left: 40px;
+	margin-top: 100px;
+	/* background-color: black; */
+	flow-children: right;
+}
+
+.VoteContainer {
+	width: 320px;
+	margin: 0px 10px 0px 10px;
+	padding: 0px 10px 0px 10px;
+
+	horizontal-align: center;
+
+	background-color: gradient( linear, 100% 0%, 100% 100%, from( #272b30 ), color-stop( 0.6, #181a1e ), to( #181a1e ) );
+	box-shadow: fill #ffffff40 0px 0px 2px 2px;
+
+	flow-children: down;
+}
+
+.MutationVoteTitle
+{
+	width: 100%;
+	font-family: 'Radiance-SemiBold';
+	font-size: 20px;
+	font-weight: normal;
+	text-transform: uppercase;
+	letter-spacing: 5.5px;
+	text-shadow: 0px 2px 6px rgba(0, 0, 0, 1);
+	padding-top: 12px;
+	padding-bottom: 12px;
+	text-align: center;
+}
+
+#MutationVoteTitlePositive
+{
+	color: #079052;
+}
+
+#MutationVoteTitleNegative
+{
+	color: #9e1f36;
+}
+
+#MutationVoteTitleTerrain
+{
+	color: #c58610;
+}
+
+#MutationTitle {
+	width: 450px;
+	margin-top: 30px;
+	margin-left: 330px;
+
+	font-size: 30px;
+	color: white;
+
+	align: left top;
+}
+
+.MutationVoteContainer {
+	width: 100%;
+
+	margin: 0px 10px 10px 10px;
+	padding: 0px 10px 0px 10px;
+
+	flow-children: down;
+}
+
+.MutationVote {
+	width: 100%;
+
+	flow-children: right;
+}
+
+#MutationVoteText {
+	font-family: 'Radiance-SemiBold';
+	font-size: 14px;
+	font-weight: normal;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	text-shadow: 0px 2px 6px rgba(0, 0, 0, 1);
+	padding-top: 6px;
+	padding-bottom: 6px;
+	text-align: center;
+	color: white;
+}

@@ -1,5 +1,3 @@
-modifier_frantic = modifier_frantic or class({})
-
 ----------------------------------------------------------------------
 -- Frantic handler
 ----------------------------------------------------------------------
@@ -7,8 +5,11 @@ modifier_frantic = modifier_frantic or class({})
 modifier_frantic = modifier_frantic or class({})
 
 function modifier_frantic:IsDebuff() return false end
+
 function modifier_frantic:RemoveOnDeath() return false end
+
 function modifier_frantic:IsPurgable() return false end
+
 function modifier_frantic:IsPurgeException() return false end
 
 function modifier_frantic:GetTexture()
@@ -25,7 +26,7 @@ end
 
 function modifier_frantic:DeclareFunctions()
 	local funcs = {
-		MODIFIER_PROPERTY_COOLDOWN_PERCENTAGE_STACKING,
+		MODIFIER_PROPERTY_COOLDOWN_PERCENTAGE,
 		MODIFIER_PROPERTY_MANACOST_PERCENTAGE,
 		MODIFIER_PROPERTY_STATUS_RESISTANCE_STACKING,
 	}
@@ -38,7 +39,7 @@ function modifier_frantic:OnCreated()
 	self:SetStackCount(_G.IMBA_FRANTIC_VALUE)
 end
 
-function modifier_frantic:GetModifierPercentageCooldownStacking()
+function modifier_frantic:GetModifierPercentageCooldown()
 	return self:GetStackCount()
 end
 
