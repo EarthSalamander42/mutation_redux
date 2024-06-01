@@ -203,3 +203,4 @@ ULTIMATE_LEVEL                                      = 100
 
 -- FAST RUNES
 FAST_RUNES_TIME                                     = 30.0
+FAST_BOUNTY_RUNES_TIME                              = 60.0

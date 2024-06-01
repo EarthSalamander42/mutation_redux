@@ -75,7 +75,7 @@
 
 	// Negative
 	"mutation_death_explosion"					"Death Explosion"
-	"mutation_death_explosion_Description"		"Deal 300 + (50 * minutes) damage in a 400 radius on death afer a 0.9 seconds delay."
+	"mutation_death_explosion_Description"		"Deal 250 + (25 * minutes) damage in a 400 radius on death afer a 1.5 seconds delay."
 
 	"mutation_death_gold_drop"					"Death Gold Drop"
 	"mutation_death_gold_drop_Description"		"Whenever a hero is killed, they drop a gold sack containing 300 + 10% of the hero's gold."
@@ -120,7 +120,7 @@
 	"mutation_omni_vision_author"				"76561198015161808"
 
 	"mutation_fast_runes"						"Fast Runes"
-	"mutation_fast_runes_Description"			"Runes spawn every 30 seconds."
+	"mutation_fast_runes_Description"			"Power runes spawn every 30 seconds. Bounty runes spawn every 60 seconds."
 
 	"mutation_diretide"							"Diretide"
 	"mutation_diretide_Description"				"Roshan roams around finding targets, killing the enemy if no candies is given (Candies are dropped from lane/neutral creeps, 30% chance)."

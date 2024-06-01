@@ -1,11 +1,13 @@
-modifier_mutation_death_explosion = class({})
+modifier_mutation_death_explosion = modifier_mutation_death_explosion or class({})
 
 function modifier_mutation_death_explosion:IsHidden() return false end
+
 function modifier_mutation_death_explosion:IsPurgable() return false end
+
 function modifier_mutation_death_explosion:RemoveOnDeath() return false end
 
 function modifier_mutation_death_explosion:DeclareFunctions()
-	local funcs = 
+	local funcs =
 	{
 		MODIFIER_EVENT_ON_DEATH,
 	}
@@ -18,16 +20,16 @@ function modifier_mutation_death_explosion:GetTexture()
 end
 
 function modifier_mutation_death_explosion:OnCreated()
-	self.delay = 0.9
+	self.delay = 1.5
 	self.radius = 400
-	self.damage = 300
-	self.damage_per_min = 50
+	self.damage = 250
+	self.damage_per_min = 25
 	self.damage_buildings_pct = 0.5
 end
 
 function modifier_mutation_death_explosion:OnDeath(keys)
 	if keys.unit == self:GetParent() then
-	if self:GetParent():IsIllusion() then return end
+		if self:GetParent():IsIllusion() then return end
 		EmitSoundOn("Hero_Pugna.NetherBlastPreCast", self:GetParent())
 
 		local particle_pre_blast_fx = ParticleManager:CreateParticle("particles/units/heroes/hero_pugna/pugna_netherblast_pre.vpcf", PATTACH_ABSORIGIN_FOLLOW, self:GetParent())

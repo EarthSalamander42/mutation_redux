@@ -40,6 +40,10 @@ function Mutation:InitGameMode()
 	mode:SetUseDefaultDOTARuneSpawnLogic(true)
 	mode:SetBotThinkingEnabled(true)
 
+	if IsInToolsMode() then
+		GameRules:GetGameModeEntity():SetDraftingBanningTimeOverride(0.0)
+	end
+
 	CustomGameEventManager:RegisterListener("setting_vote", Dynamic_Wrap(Mutation, "OnSettingVote"))
 
 	Mutation:ChooseMutation("positive", POSITIVE_MUTATION_LIST[1])
@@ -168,36 +172,41 @@ function Mutation:UltimateLevel()
 	local XP_PER_LEVEL_TABLE = {}
 	-- Vanilla
 	XP_PER_LEVEL_TABLE[1] = 0   -- +0
-	XP_PER_LEVEL_TABLE[2] = 200 -- +200
-	XP_PER_LEVEL_TABLE[3] = 600 -- +400
-	XP_PER_LEVEL_TABLE[4] = 1080 -- +480
-	XP_PER_LEVEL_TABLE[5] = 1680 -- +600
-	XP_PER_LEVEL_TABLE[6] = 2300 -- +620
-	XP_PER_LEVEL_TABLE[7] = 2940 -- +640
-	XP_PER_LEVEL_TABLE[8] = 3600 -- +660
-	XP_PER_LEVEL_TABLE[9] = 4280 -- +680
-	XP_PER_LEVEL_TABLE[10] = 5080 -- +800
-	XP_PER_LEVEL_TABLE[11] = 5900 -- +820
-	XP_PER_LEVEL_TABLE[12] = 6740 -- +840
-	XP_PER_LEVEL_TABLE[13] = 7640 -- +900
-	XP_PER_LEVEL_TABLE[14] = 8865 -- +1225
-	XP_PER_LEVEL_TABLE[15] = 10115 -- +1250
-	XP_PER_LEVEL_TABLE[16] = 11390 -- +1275
-	XP_PER_LEVEL_TABLE[17] = 12690 -- +1300
-	XP_PER_LEVEL_TABLE[18] = 14015 -- +1325
-	XP_PER_LEVEL_TABLE[19] = 15415 -- +1400
-	XP_PER_LEVEL_TABLE[20] = 16905 -- +1490
-	XP_PER_LEVEL_TABLE[21] = 18405 -- +1500
-	XP_PER_LEVEL_TABLE[22] = 20155 -- +1750
-	XP_PER_LEVEL_TABLE[23] = 22155 -- +2000
-	XP_PER_LEVEL_TABLE[24] = 24405 -- +2250
-	XP_PER_LEVEL_TABLE[25] = 26905 -- +2500
+	XP_PER_LEVEL_TABLE[2] = 240 -- +240
+	XP_PER_LEVEL_TABLE[3] = 640 -- +400
+	XP_PER_LEVEL_TABLE[4] = 1160 -- +520
+	XP_PER_LEVEL_TABLE[5] = 1760 -- +600
+	XP_PER_LEVEL_TABLE[6] = 2440 -- +680
+	XP_PER_LEVEL_TABLE[7] = 3200 -- +760
+	XP_PER_LEVEL_TABLE[8] = 4000 -- +800
+	XP_PER_LEVEL_TABLE[9] = 4900 -- +900
+	XP_PER_LEVEL_TABLE[10] = 5900 -- +1000
+	XP_PER_LEVEL_TABLE[11] = 7000 -- +1100
+	XP_PER_LEVEL_TABLE[12] = 8200 -- +1200
+	XP_PER_LEVEL_TABLE[13] = 9500 -- +1300
+	XP_PER_LEVEL_TABLE[14] = 10900 -- +1400
+	XP_PER_LEVEL_TABLE[15] = 12400 -- +1500
+	XP_PER_LEVEL_TABLE[16] = 14000 -- +1600
+	XP_PER_LEVEL_TABLE[17] = 15700 -- +1700
+	XP_PER_LEVEL_TABLE[18] = 17500 -- +1800
+	XP_PER_LEVEL_TABLE[19] = 19400 -- +1900
+	XP_PER_LEVEL_TABLE[20] = 21400 -- +2000
+	XP_PER_LEVEL_TABLE[21] = 23600 -- +2200
+	XP_PER_LEVEL_TABLE[22] = 26000 -- +2400
+	XP_PER_LEVEL_TABLE[23] = 28600 -- +2600
+	XP_PER_LEVEL_TABLE[24] = 31400 -- +2800
+	XP_PER_LEVEL_TABLE[25] = 34400 -- +3000
+	XP_PER_LEVEL_TABLE[26] = 38400 -- +4000
+	XP_PER_LEVEL_TABLE[27] = 43400 -- +5000
+	XP_PER_LEVEL_TABLE[28] = 49400 -- +6000
+	XP_PER_LEVEL_TABLE[29] = 56400 -- +7000
+	XP_PER_LEVEL_TABLE[30] = 63900 -- +7500
 
 	GameRules:GetGameModeEntity():SetUseCustomHeroLevels(true)
 	GameRules:GetGameModeEntity():SetCustomXPRequiredToReachNextLevel(XP_PER_LEVEL_TABLE)
 
-	if ULTIMATE_LEVEL and ULTIMATE_LEVEL > 25 then
-		local j = 26
+	if ULTIMATE_LEVEL and ULTIMATE_LEVEL > 30 then
+		local j = 31
 		Timers:CreateTimer(function()
 			if j >= ULTIMATE_LEVEL then return end
 			print(j)
@@ -209,6 +218,37 @@ function Mutation:UltimateLevel()
 			return 1.0
 		end)
 	end
+
+	-- Mutation.gold_filter = 200
+	Mutation.experience_filter = 200 -- 200% experience
+
+	-- GameRules:GetGameModeEntity():SetModifyGoldFilter(Dynamic_Wrap(Mutation, "GoldFilter"), self)
+	GameRules:GetGameModeEntity():SetModifyExperienceFilter(Dynamic_Wrap(Mutation, "ExperienceFilter"), self)
+end
+
+-- function Mutation:GoldFilter(keys)
+-- 	-- print("[BAREBONES] GoldFilter")
+-- 	-- PrintTable(keys)
+
+-- 	-- keys["player_id_const"]
+-- 	-- keys["gold"]
+-- 	-- keys["reason_const"]
+
+-- 	return true
+-- end
+
+function Mutation:ExperienceFilter(keys)
+	-- print("[BAREBONES] ExperienceFilter")
+	-- PrintTable(keys)
+
+	-- keys["player_id_const"]
+	-- keys["hero_entindex_const"]
+	-- keys["experience"]
+	-- keys["reason_const"]
+
+	keys.experience = keys.experience * Mutation.experience_filter / 100
+
+	return true
 end
 
 -- new system, double votes for donators

@@ -151,7 +151,8 @@ function AllPlayersLoaded() {
 				panel.FindChildTraverse("MutationVoteText").text = $.Localize("#mutation_" + mutation_name);
 
 				if (i == 1) {
-					panel.FindChildTraverse("MutationVoteText").text = panel.FindChildTraverse("MutationVoteText").text + " (default)";
+					panel.FindChildTraverse("MutationVoteText").text = panel.FindChildTraverse("MutationVoteText").text;
+					// panel.FindChildTraverse("MutationVoteText").text = panel.FindChildTraverse("MutationVoteText").text + " (default)";
 				}
 
 				(function (panel, mutation_name, mutation_type) {
@@ -183,15 +184,139 @@ function HoverableLoadingScreen() {
 		$.Schedule(1.0, HoverableLoadingScreen)
 }
 
-function OnVoteButtonPressed(category, vote)
-{
+function OnVoteButtonPressed(category, vote) {
 	$.Msg("Category: ", category);
 	$.Msg("Vote: ", vote);
 	GameEvents.SendCustomGameEventToServer("setting_vote", { "category": category, "vote": vote, "PlayerID": Game.GetLocalPlayerID() });
 }
 
+let previous_vote;
+
+// if (Game.IsInToolsMode()) {
+// 	OnVotesReceived({"table":{"1":{"1":"ultimate_level","2":1}},"category":"positive","vote":"ultimate_level"}, true);
+// 	OnVotesReceived({"table":{"1":{"1":"stay_frosty","2":1}},"category":"negative","vote":"stay_frosty"}, true);
+// 	OnVotesReceived({"table":{"1":{"1":"wormhole","2":1}},"category":"terrain","vote":"wormhole"}, true);
+// }
+
 /* TODO: show how many votes there is on each selections */
-function OnVotesReceived(args) {
+function OnVotesReceived(args, test) {
+	// $.Msg("Received votes: ", args);
+	// If voting for the same mutation, do nothing
+	if (args.vote == previous_vote) {
+		$.Msg("Same vote, returning");
+		return;
+	}
+
+	const mutations = CustomNetTables.GetTableValue("game_options", "mutation_list");
+	// $.Msg(mutations)
+	// $.Msg(args);
+
+	// Capital letter for first letter
+	const category = args.category.charAt(0).toUpperCase() + args.category.slice(1);
+
+	// Find the right column
+	const column = $("#MutationVote" + category);
+
+	// Find the right row count
+	let i = 1;
+	let row_count = 0;
+
+	while (mutations[args.category][i]) {
+		// $.Msg("Checking row ", i, " mutations[args.category][i]: ", mutations[args.category][i]);
+		if (mutations[args.category][i] == args.vote) {
+			// $.Msg("Found vote at row ", i, " for ", args.vote);
+			row_count = i;
+			// break;
+		} else {
+			// Remove the previous steam image based on the player's steam id
+			const steam_image_container = column.FindChildTraverse("MutationVote" + category + i).FindChildTraverse("SteamImageContainer");
+
+			if (steam_image_container) {
+				// if (steam_image_container.GetChildCount() > 0) {
+					// $.Msg("Number of votes for mutation ", mutations[args.category][i], " is ", steam_image_container.GetChildCount());
+				// }
+
+				// $.Msg(mutations[args.category][i], " - ", steam_image_container.FindChildrenWithClassTraverse("SteamImage").length);
+				// if (steam_image_container.FindChildrenWithClassTraverse("SteamImage").length > 0) {
+				// 	$.Msg(steam_image_container.FindChildrenWithClassTraverse("SteamImage")[0]);
+				// 	$.Msg(steam_image_container.FindChildrenWithClassTraverse("SteamImage")[1]);
+				// }
+
+				for (let j = 0; j < steam_image_container.FindChildrenWithClassTraverse("SteamImage").length; j++) {
+					const steam_image = steam_image_container.FindChildrenWithClassTraverse("SteamImage")[j];
+					// $.Msg(steam_image);
+
+					if (steam_image) {
+						// if (steam_image.GetChild(0).steamid) {
+						// 	$.Msg("Check steam image ", j , " steam id: ", steam_image.steamid, " (", Game.GetLocalPlayerInfo().player_steamid ,") for mutation ", mutations[args.category][i]);
+						// }
+
+						if (steam_image.GetChild(0).steamid == Game.GetLocalPlayerInfo().player_steamid) {
+							// $.Msg("Removing steam image for SteamID: ", Game.GetLocalPlayerInfo().player_steamid , " for mutation ", mutations[args.category][i]);
+							steam_image.DeleteAsync(0);
+						}
+					// } else {
+						// $.Msg("Steam image not found for SteamID ", Game.GetLocalPlayerInfo().player_steamid);
+					}
+				}
+
+				// $.Msg(steam_image);
+				// $.Msg(steam_image.steamid);
+				// if (steam_image.steamid == Game.GetLocalPlayerInfo().player_steamid) {
+				// 	// $.Msg("Removing steam image for ", args.vote);
+				// 	steam_image.DeleteAsync(0);
+				// }
+			}
+		}
+
+		i++;
+	}
+
+	previous_vote = args.vote;
+
+	// Hide vote count label if there are no votes
+	$.Schedule(0.01, function () {
+		let j = 1;
+
+		while (mutations[args.category][j]) {
+			// Hide vote count label if there are no votes
+			const vote_count = column.FindChildTraverse("MutationVote" + category + j).FindChildTraverse("SteamImageContainer").GetChildCount();
+
+			// $.Msg("Vote count for ", mutations[args.category][j], " is ", vote_count);
+			if (vote_count == 0) {
+				const vote_count_label = column.FindChildTraverse("MutationVote" + category + j).FindChildTraverse("VoteCount");
+
+				if (vote_count_label && vote_count_label.BHasClass("visible")) {
+					// $.Msg("Hiding vote count for ", mutations[args.category][j]);
+					// $.Msg(vote_count_label);
+					vote_count_label.SetHasClass("visible", false);
+				}
+			}
+
+			j++;
+		}
+	});
+
+	// Find the right row
+	const row = column.FindChildTraverse("MutationVote" + category + row_count);
+
+	// Create steam image panel to show the votes
+	const steam_image = $.CreatePanel("Panel", row.GetChild(0).FindChildTraverse("SteamImageContainer"), "");
+	steam_image.BLoadLayoutSnippet("SteamImage");
+	let steam_id = Game.GetLocalPlayerInfo().player_steamid;
+	if (test) {
+		steam_id = 76561198056163496;
+	}
+
+	steam_image.FindChildTraverse("AvatarImage").steamid = steam_id;
+
+	// Set vote count label based on how many players have voted for this mutation
+	const vote_count = row.GetChild(0).FindChildTraverse("SteamImageContainer").GetChildCount() - 4
+
+	if (vote_count > 0) {
+		row.GetChild(0).FindChildTraverse("VoteCount").SetDialogVariableInt("vote", vote_count);
+		row.GetChild(0).FindChildTraverse("VoteCount").SetHasClass("visible", true);
+	}
 }
 
 function HidePickScreenDuringGame() {

@@ -13,6 +13,10 @@
 			<Panel class="MutationVote">
 				<RadioButton group="positive" class="MutationVote">
 					<Label id="MutationVoteText" text="" />
+					<Panel class="AlignRight">
+						<Label id="VoteCount" text="+{i:vote}" />
+						<Panel id="SteamImageContainer"/>
+					</Panel>
 				</RadioButton>
 			</Panel>
 		</snippet>
@@ -21,6 +25,10 @@
 			<Panel class="MutationVote">
 				<RadioButton group="negative" class="MutationVote">
 					<Label id="MutationVoteText" text="" />
+					<Panel class="AlignRight">
+						<Label id="VoteCount" text="+{i:vote}" />
+						<Panel id="SteamImageContainer"/>
+					</Panel>
 				</RadioButton>
 			</Panel>
 		</snippet>
@@ -29,7 +37,18 @@
 			<Panel class="MutationVote">
 				<RadioButton group="terrain" class="MutationVote">
 					<Label id="MutationVoteText" text="" />
+					<Panel class="AlignRight">
+						<Label id="VoteCount" text="+{i:vote}" />
+						<Panel id="SteamImageContainer"/>
+					</Panel>
 				</RadioButton>
+			</Panel>
+		</snippet>
+
+		<snippet name="SteamImage">
+			<Panel class="SteamImage">
+				<DOTAAvatarImage id="AvatarImage" steamid="" />
+				<!-- <Label id="VoteCount" text="(+{i:vote})" /> -->
 			</Panel>
 		</snippet>
 	</snippets>

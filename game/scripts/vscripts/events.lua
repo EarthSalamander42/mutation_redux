@@ -28,7 +28,7 @@ function Mutation:OnGameRulesStateChange(keys)
 			self:RevealAllMap()
 		elseif MUTATION_LIST["terrain"] == "fast_runes" then
 			GameRules:GetGameModeEntity():SetPowerRuneSpawnInterval(FAST_RUNES_TIME)
-			GameRules:GetGameModeEntity():SetBountyRuneSpawnInterval(FAST_RUNES_TIME)
+			GameRules:GetGameModeEntity():SetBountyRuneSpawnInterval(FAST_BOUNTY_RUNES_TIME)
 		end
 
 		Timers:CreateTimer(3.0, function()
@@ -321,7 +321,11 @@ function Mutation:OnNPCSpawned(keys)
 			elseif MUTATION_LIST["positive"] == "frantic" then
 				npc:AddNewModifier(npc, nil, "modifier_frantic", {})
 			elseif MUTATION_LIST["positive"] == "jump_start" then
-				npc:AddExperience(2300, DOTA_ModifyXP_CreepKill, false, true)
+				for i = 1, 4 do
+					npc:HeroLevelUp(false)
+				end
+
+				npc:HeroLevelUp(true)
 			elseif MUTATION_LIST["positive"] == "super_blink" then
 				if npc:IsIllusion() then return end
 				npc:AddItemByName("item_super_blink"):SetSellable(false)
@@ -333,7 +337,9 @@ function Mutation:OnNPCSpawned(keys)
 				npc.reincarnating = false
 			end
 
-			if MUTATION_LIST["negative"] == "death_explosion" then
+			if MUTATION_LIST["negative"] == "alien_incubation" then
+				npc:AddNewModifier(npc, nil, "modifier_mutation_alien_incubation", {})
+			elseif MUTATION_LIST["negative"] == "death_explosion" then
 				npc:AddNewModifier(npc, nil, "modifier_mutation_death_explosion", {})
 			elseif MUTATION_LIST["negative"] == "no_health_bar" then
 				npc:AddNewModifier(npc, nil, "modifier_no_health_bar", {})
@@ -442,6 +448,13 @@ function Mutation:OnHeroDeath(hero)
 			local dropTarget = hero:GetAbsOrigin() + RandomVector(RandomFloat(50, 150))
 			newItem:LaunchLoot(true, 300, 0.75, dropTarget)
 			EmitSoundOn("Dungeon.TreasureItemDrop", hero)
+		end
+	end
+
+	-- respawn time is wonky when level is higher than 30, so we need to fix it
+	if MUTATION_LIST["positive"] == "ultimate_level" then
+		if not hero:IsReincarnating() then
+			hero:SetTimeUntilRespawn((hero:GetLevel() * 2) + 120.0)
 		end
 	end
 end

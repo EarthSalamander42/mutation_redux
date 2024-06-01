@@ -4,8 +4,9 @@ require('internal/util')
 require('gamemode')
 
 function Precache(context)
-	-- Teammate Resurrection
-	PrecacheResource("model", "models/props_gameplay/tombstoneb01.vmdl", context)
+	-- Death Explosion
+	PrecacheResource("particle", "particles/units/heroes/hero_pugna/pugna_netherblast_pre.vpcf", context)
+	PrecacheResource("particle", "particles/units/heroes/hero_pugna/pugna_netherblast.vpcf", context)
 
 	-- Killstreak Power
 	PrecacheResource("particle", "particles/hw_fx/candy_carrying_stack.vpcf", context)
@@ -32,14 +33,6 @@ function Precache(context)
 	PrecacheResource("particle", "particles/units/heroes/hero_bounty_hunter/bounty_hunter_track_haste.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_abaddon/holdout_borrowed_time_2.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_abaddon/holdout_borrowed_time_3.vpcf", context)
-
-	-- Wormhole
-	PrecacheResource("particle", "particles/ambient/wormhole_circle.vpcf", context)
-
-	-- Tug of War
-	PrecacheResource("particle", "particles/ambient/tug_of_war_team_dire.vpcf", context)
-	PrecacheResource("particle", "particles/ambient/tug_of_war_team_radiant.vpcf", context)
-
 	PrecacheResource("soundfile", "soundevents/game_sounds_heroes/game_sounds_abaddon.vsndevts", context)
 	PrecacheResource("soundfile", "soundevents/game_sounds_heroes/game_sounds_ancient_apparition.vsndevts", context)
 	PrecacheResource("soundfile", "soundevents/game_sounds_heroes/game_sounds_bloodseeker.vsndevts", context)
@@ -54,6 +47,17 @@ function Precache(context)
 	PrecacheResource("soundfile", "soundevents/game_sounds_heroes/game_sounds_warlock.vsndevts", context)
 	PrecacheResource("soundfile", "soundevents/game_sounds_heroes/game_sounds_zuus.vsndevts", context)
 
+	-- Teammate Resurrection
+	PrecacheResource("model", "models/props_gameplay/tombstoneb01.vmdl", context)
+
+	-- Tug of War
+	PrecacheResource("particle", "particles/ambient/tug_of_war_team_dire.vpcf", context)
+	PrecacheResource("particle", "particles/ambient/tug_of_war_team_radiant.vpcf", context)
+
+	-- Wormhole
+	PrecacheResource("particle", "particles/ambient/wormhole_circle.vpcf", context)
+
+	-- Sound Events
 	PrecacheResource("soundfile", "soundevents/game_sounds_custom.vsndevts", context)
 end
 

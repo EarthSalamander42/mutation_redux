@@ -2,7 +2,7 @@
 -- Coder: EarthSalamander #42
 -- Particle: Toyoka
 
-modifier_mutation_kill_streak_power = class({})
+modifier_mutation_kill_streak_power = modifier_mutation_kill_streak_power or class({})
 
 function modifier_mutation_kill_streak_power:IsHidden() return false end
 
@@ -76,7 +76,7 @@ function modifier_mutation_kill_streak_power:OnHeroKilled(params)
 	self:SetStackCount(self:GetStackCount() + 1)
 
 	local stacks = self:GetStackCount()
-	ParticleManager:SetParticleControl(self.particle, 1, Vector(0, stacks, 0))
+	ParticleManager:SetParticleControl(self.particle, 1, Vector(10, stacks, 0))
 
 	-- local stack = self:GetStackCount() * 20
 	-- local stack_100 = math.floor(stack / 100)
