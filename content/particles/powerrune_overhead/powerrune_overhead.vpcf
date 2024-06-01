@@ -1,0 +1,77 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:vpcf57:version{4f75132e-4f5d-493c-958e-3bb4328089ba} -->
+{
+	_class = "CParticleSystemDefinition"
+	m_bShouldHitboxesFallbackToRenderBounds = false
+	m_nMaxParticles = 1
+	m_flConstantRadius = 0.5
+	m_nBehaviorVersion = 12
+	m_nFirstMultipleOverride_BackwardCompat = 4
+	m_controlPointConfigurations = 
+	[
+		{
+			m_name = "preview"
+			m_drivers = 
+			[
+				{
+					m_iAttachType = "PATTACH_WORLDORIGIN"
+					m_entityName = "self"
+				},
+			]
+		},
+	]
+	m_PreEmissionOperators = 
+	[
+		{
+			_class = "C_OP_RemapCPtoCP"
+			m_nInputControlPoint = 1
+			m_nOutputControlPoint = 3
+			m_nInputField = 1
+			m_flInputMin = 10.0
+			m_flInputMax = 10.0
+			m_flOutputMin = 1.0
+			m_flOutputMax = 2.0
+		},
+		{
+			_class = "C_OP_RemapCPtoCP"
+			m_nInputControlPoint = 1
+			m_nOutputControlPoint = 3
+			m_nInputField = 1
+			m_nOutputField = 2
+			m_flInputMin = 1.0
+			m_flInputMax = 10.0
+			m_flOutputMin = 1.0
+			m_flOutputMax = 10.0
+		},
+	]
+	m_Children = 
+	[
+		{
+			m_ChildRef = resource:"particles/powerrune_overhead/powerrune_overhead_01.vpcf"
+		},
+		{
+			m_ChildRef = resource:"particles/powerrune_overhead/powerrune_overhead_02.vpcf"
+		},
+		{
+			m_ChildRef = resource:"particles/powerrune_overhead/powerrune_overhead_03.vpcf"
+		},
+		{
+			m_ChildRef = resource:"particles/powerrune_overhead/powerrune_overhead_04.vpcf"
+		},
+		{
+			m_ChildRef = resource:"particles/powerrune_overhead/powerrune_overhead_05.vpcf"
+		},
+		{
+			m_ChildRef = resource:"particles/powerrune_overhead/powerrune_overhead_06.vpcf"
+		},
+		{
+			m_ChildRef = resource:"particles/powerrune_overhead/powerrune_overhead_07.vpcf"
+		},
+		{
+			m_ChildRef = resource:"particles/powerrune_overhead/powerrune_overhead_number_controller.vpcf"
+		},
+		{
+			m_ChildRef = resource:"particles/powerrune_overhead/powerrune_overhead_number_controller.vpcf"
+			m_flDelay = 0.25
+		},
+	]
+}

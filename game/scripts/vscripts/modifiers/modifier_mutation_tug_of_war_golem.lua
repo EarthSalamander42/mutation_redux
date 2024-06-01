@@ -1,7 +1,9 @@
 modifier_mutation_tug_of_war_golem = class({})
 
 function modifier_mutation_tug_of_war_golem:IsHidden() return false end
+
 function modifier_mutation_tug_of_war_golem:RemoveOnDeath() return false end
+
 function modifier_mutation_tug_of_war_golem:IsPurgable() return false end
 
 -- Golem Parameters (per stack, unless variable ends in Max)
@@ -126,16 +128,26 @@ function modifier_mutation_tug_of_war_golem:OnDeath(keys)
 					golem = CreateUnitByName("npc_dota_mutation_golem", death_position, false, nil, nil, DOTA_TEAM_BADGUYS)
 					golem.ambient_pfx = ParticleManager:CreateParticle("particles/ambient/tug_of_war_team_dire.vpcf", PATTACH_ABSORIGIN_FOLLOW, golem)
 					ParticleManager:SetParticleControl(golem.ambient_pfx, 0, golem:GetAbsOrigin())
+
 					Timers:CreateTimer(0.1, function()
-						golem:MoveToPositionAggressive(MUTATION_LIST_TUG_OF_WAR_TARGET[DOTA_TEAM_BADGUYS])
-					return 2 end) -- Recall the command every 2 seconds so AI doesn't get bricked
+						if MUTATION_LIST_TUG_OF_WAR_TARGET[DOTA_TEAM_BADGUYS] and not MUTATION_LIST_TUG_OF_WAR_TARGET[DOTA_TEAM_BADGUYS]:IsNull() then
+							golem:MoveToPositionAggressive(MUTATION_LIST_TUG_OF_WAR_TARGET[DOTA_TEAM_BADGUYS])
+						end
+
+						return 2
+					end) -- Recall the command every 2 seconds so AI doesn't get bricked
 				elseif original_team == DOTA_TEAM_BADGUYS then
 					golem = CreateUnitByName("npc_dota_mutation_golem", death_position, false, nil, nil, DOTA_TEAM_GOODGUYS)
 					golem.ambient_pfx = ParticleManager:CreateParticle("particles/ambient/tug_of_war_team_radiant.vpcf", PATTACH_ABSORIGIN_FOLLOW, golem)
 					ParticleManager:SetParticleControl(golem.ambient_pfx, 0, golem:GetAbsOrigin())
+
 					Timers:CreateTimer(0.1, function()
-						golem:MoveToPositionAggressive(MUTATION_LIST_TUG_OF_WAR_TARGET[DOTA_TEAM_GOODGUYS])
-					return 2 end) -- Recall the command every 2 seconds so AI doesn't get bricked
+						if MUTATION_LIST_TUG_OF_WAR_TARGET[DOTA_TEAM_GOODGUYS] and not MUTATION_LIST_TUG_OF_WAR_TARGET[DOTA_TEAM_GOODGUYS]:IsNull() then
+							golem:MoveToPositionAggressive(MUTATION_LIST_TUG_OF_WAR_TARGET[DOTA_TEAM_GOODGUYS])
+						end
+
+						return 2
+					end) -- Recall the command every 2 seconds so AI doesn't get bricked
 				end
 
 				-- Spawn logic

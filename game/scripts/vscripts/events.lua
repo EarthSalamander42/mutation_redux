@@ -339,6 +339,8 @@ function Mutation:OnNPCSpawned(keys)
 				npc:AddNewModifier(npc, nil, "modifier_no_health_bar", {})
 			elseif MUTATION_LIST["negative"] == "defense_of_the_ants" then
 				npc:AddNewModifier(npc, nil, "modifier_mutation_ants", {})
+			elseif MUTATION_LIST["negative"] == "monkey_business" then
+				npc:AddNewModifier(npc, nil, "modifier_mutation_monkey_business", {})
 			end
 
 			npc.first_spawn = true

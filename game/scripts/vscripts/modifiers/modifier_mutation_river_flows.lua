@@ -1,9 +1,12 @@
-LinkLuaModifier("modifier_mutation_river_flows_boost", "modifiers/modifier_mutation_river_flows.lua", LUA_MODIFIER_MOTION_NONE )
+LinkLuaModifier("modifier_mutation_river_flows_boost", "modifiers/modifier_mutation_river_flows.lua", LUA_MODIFIER_MOTION_NONE)
 
 modifier_mutation_river_flows = modifier_mutation_river_flows or class({})
 function modifier_mutation_river_flows:IsHidden() return true end
+
 function modifier_mutation_river_flows:IsDebuff() return false end
+
 function modifier_mutation_river_flows:IsPurgable() return false end
+
 function modifier_mutation_river_flows:RemoveOnDeath() return false end
 
 function modifier_mutation_river_flows:OnCreated()
@@ -32,7 +35,7 @@ function modifier_mutation_river_flows:IsInRiver()
 	if parent:GetUnitName() == "npc_dota_elder_titan_ancestral_spirit" or parent:GetUnitName() == "npc_dota_gyrocopter_homing_missile" then return end
 
 	-- Add additional logic to allow shadow blade / silver edge usage to also be in check for river
-	if origin.z < 160 and (parent:HasGroundMovementCapability() or parent:HasModifier("modifier_item_imba_shadow_blade_invis") or parent:HasModifier("modifier_item_imba_silver_edge_invis")) then
+	if origin.z < 100 and (parent:HasGroundMovementCapability() or parent:HasModifier("modifier_item_imba_shadow_blade_invis") or parent:HasModifier("modifier_item_imba_silver_edge_invis")) then
 		return true
 	else
 		return false
@@ -41,7 +44,9 @@ end
 
 modifier_mutation_river_flows_boost = class({})
 function modifier_mutation_river_flows_boost:IsHidden() return false end
+
 function modifier_mutation_river_flows_boost:IsDebuff() return false end
+
 function modifier_mutation_river_flows_boost:IsPurgable() return false end
 
 function modifier_mutation_river_flows_boost:GetTexture()

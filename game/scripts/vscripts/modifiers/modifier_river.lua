@@ -1,7 +1,9 @@
 modifier_river = class({})
 
 function modifier_river:IsHidden() return true end
+
 function modifier_river:IsDebuff() return false end
+
 function modifier_river:IsPurgable() return false end
 
 function modifier_river:OnCreated()
@@ -29,7 +31,7 @@ function modifier_river:IsInRiver()
 	local origin = parent:GetAbsOrigin()
 	if parent:GetUnitName() == "npc_dota_elder_titan_ancestral_spirit" or parent:GetUnitName() == "npc_dota_gyrocopter_homing_missile" then return end
 
-	if origin.z < 160 and parent:HasGroundMovementCapability() then
+	if origin.z < 100 and parent:HasGroundMovementCapability() then
 		return true
 	else
 		return false
@@ -80,15 +82,15 @@ end
 --]]
 
 function modifier_river:GetCorrectPoint()
-local parent = self:GetParent()
-local forwardPoint = parent:GetAbsOrigin() + (parent.slideVector * self.speed * FrameTime())
-local rotateInterval = 1
-local leftRotation = 0
-local rightRotation = 0
+	local parent = self:GetParent()
+	local forwardPoint = parent:GetAbsOrigin() + (parent.slideVector * self.speed * FrameTime())
+	local rotateInterval = 1
+	local leftRotation = 0
+	local rightRotation = 0
 
-local leftPoint = forwardPoint
-local rightPoint = forwardPoint
-local correctPoint
+	local leftPoint = forwardPoint
+	local rightPoint = forwardPoint
+	local correctPoint
 
 	while not correctPoint do
 		leftRotation = leftRotation - rotateInterval
@@ -110,4 +112,5 @@ local correctPoint
 	print(correctPoint, GridNav:IsTraversable(forwardPoint))
 	return correctPoint
 end
+
 --]]

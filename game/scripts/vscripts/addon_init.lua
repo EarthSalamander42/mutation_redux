@@ -23,6 +23,7 @@ LinkLuaModifier("modifier_mutation_cold_feet", "modifiers/periodic_spellcast/mod
 LinkLuaModifier("modifier_mutation_stampede", "modifiers/periodic_spellcast/modifier_mutation_stampede.lua", LUA_MODIFIER_MOTION_NONE)
 LinkLuaModifier("modifier_mutation_bloodlust", "modifiers/periodic_spellcast/modifier_mutation_bloodlust.lua", LUA_MODIFIER_MOTION_NONE)
 LinkLuaModifier("modifier_mutation_aphotic_shield", "modifiers/periodic_spellcast/modifier_mutation_aphotic_shield.lua", LUA_MODIFIER_MOTION_NONE)
+LinkLuaModifier("modifier_mutation_monkey_business", "modifiers/modifier_mutation_monkey_business.lua", LUA_MODIFIER_MOTION_NONE)
 
 LinkLuaModifier("modifier_mutation_river_flows", "modifiers/modifier_mutation_river_flows.lua", LUA_MODIFIER_MOTION_NONE)
 LinkLuaModifier("modifier_sticky_river", "modifiers/modifier_sticky_river.lua", LUA_MODIFIER_MOTION_NONE)

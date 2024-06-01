@@ -43,7 +43,7 @@
 		"ID"							"2547"														// unique ID number for this item.  Do not change this once established or it will invalidate collected stats.
 		"AbilityName"					"item_tombstone"
 		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_CHANNELLED | DOTA_ABILITY_BEHAVIOR_DONT_RESUME_ATTACK"
-		"Model"							"models/props_gameplay/tombstoneb01.mdl"
+		"Model"							"models/props_gameplay/tombstoneb01.vmdl"
 		"PingOverrideText"				"DOTA_Chat_Tombstone_Pinged"
 
 		// Stats
