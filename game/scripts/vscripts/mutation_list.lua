@@ -17,26 +17,26 @@ POSITIVE_MUTATION_LIST[7] = "ultimate_level"
 
 -- Negative Mutations
 NEGATIVE_MUTATION_LIST = {}
-NEGATIVE_MUTATION_LIST[1] = "alien_incubation"
-NEGATIVE_MUTATION_LIST[2] = "death_explosion"
-NEGATIVE_MUTATION_LIST[3] = "death_gold_drop"
+-- NEGATIVE_MUTATION_LIST[1] = "alien_incubation"
+NEGATIVE_MUTATION_LIST[1] = "death_explosion"
+-- NEGATIVE_MUTATION_LIST[3] = "death_gold_drop"
 -- NEGATIVE_MUTATION_LIST[4] = "defense_of_the_ants"
-NEGATIVE_MUTATION_LIST[4] = "monkey_business"
-NEGATIVE_MUTATION_LIST[5] = "no_health_bar"
-NEGATIVE_MUTATION_LIST[6] = "periodic_spellcast"
-NEGATIVE_MUTATION_LIST[7] = "stay_frosty"
+NEGATIVE_MUTATION_LIST[2] = "monkey_business"
+NEGATIVE_MUTATION_LIST[3] = "no_health_bar"
+NEGATIVE_MUTATION_LIST[4] = "periodic_spellcast"
+NEGATIVE_MUTATION_LIST[5] = "stay_frosty"
 
 -- Terrain Mutations
 TERRAIN_MUTATION_LIST = {}
 TERRAIN_MUTATION_LIST[1] = "gift_exchange" -- Airdrop
 TERRAIN_MUTATION_LIST[2] = "call_down"
 TERRAIN_MUTATION_LIST[3] = "fast_runes"
-TERRAIN_MUTATION_LIST[4] = "minefield"
-TERRAIN_MUTATION_LIST[5] = "river_flows"
+-- TERRAIN_MUTATION_LIST[4] = "minefield"
+TERRAIN_MUTATION_LIST[4] = "river_flows"
 -- TERRAIN_MUTATION_LIST[5] = "sleepy_river"
-TERRAIN_MUTATION_LIST[6] = "speed_freaks"
+TERRAIN_MUTATION_LIST[5] = "speed_freaks"
 -- TERRAIN_MUTATION_LIST[7] = "tug_of_war"
-TERRAIN_MUTATION_LIST[7] = "wormhole"
+-- TERRAIN_MUTATION_LIST[7] = "wormhole"
 
 MUTATION_LIST = {}
 MUTATION_LIST["positive"] = POSITIVE_MUTATION_LIST
@@ -44,7 +44,6 @@ MUTATION_LIST["negative"] = NEGATIVE_MUTATION_LIST
 MUTATION_LIST["terrain"] = TERRAIN_MUTATION_LIST
 CustomNetTables:SetTableValue("game_options", "mutation_list", MUTATION_LIST)
 
---TERRAIN_MUTATION_LIST["sleepy_river"] = false
 -- TERRAIN_MUTATION_LIST["no_trees"] = false
 -- TERRAIN_MUTATION_LIST["omni_vision"] = false
 -- TERRAIN_MUTATION_LIST["sticky_river"] = false

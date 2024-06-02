@@ -31,8 +31,6 @@ function Mutation:PostLoadPrecache()
 end
 
 function Mutation:InitGameMode()
-	GameRules:GetGameModeEntity():SetItemAddedToInventoryFilter(Dynamic_Wrap(self, "ItemAddedFilter"), self)
-
 	-- GameRules:SetShowcaseTime(0.0)
 
 	local mode = GameRules:GetGameModeEntity()
@@ -41,8 +39,13 @@ function Mutation:InitGameMode()
 	mode:SetBotThinkingEnabled(true)
 
 	if IsInToolsMode() then
-		GameRules:GetGameModeEntity():SetDraftingBanningTimeOverride(0.0)
+		mode:SetDraftingBanningTimeOverride(0.0)
 	end
+
+	mode:SetItemAddedToInventoryFilter(Dynamic_Wrap(Mutation, "ItemAddedFilter"), self)
+	mode:SetExecuteOrderFilter(Dynamic_Wrap(Mutation, "OrderFilter"), self)
+	-- mode:SetModifyGoldFilter(Dynamic_Wrap(Mutation, "GoldFilter"), self)
+	mode:SetModifyExperienceFilter(Dynamic_Wrap(Mutation, "ExperienceFilter"), self)
 
 	CustomGameEventManager:RegisterListener("setting_vote", Dynamic_Wrap(Mutation, "OnSettingVote"))
 
@@ -141,33 +144,6 @@ function Mutation:SpawnRandomItem()
 	EmitGlobalSound("powerup_03")
 end
 
--- Item added to inventory filter
-function Mutation:ItemAddedFilter(keys)
-	-- Typical keys:
-	-- inventory_parent_entindex_const: 852
-	-- item_entindex_const: 1519
-	-- item_parent_entindex_const: -1
-	-- suggested_slot: -1
-	local unit = EntIndexToHScript(keys.inventory_parent_entindex_const)
-	local item = EntIndexToHScript(keys.item_entindex_const)
-	local item_name = 0
-	if item:GetName() then
-		item_name = item:GetName()
-	end
-
-	if item.airdrop then
-		local overthrow_item_drop =
-		{
-			hero_id = unit:GetClassname(),
-			dropped_item = item:GetName()
-		}
-		CustomGameEventManager:Send_ServerToAllClients("overthrow_item_drop", overthrow_item_drop)
-		EmitGlobalSound("powerup_04")
-	end
-
-	return true
-end
-
 function Mutation:UltimateLevel()
 	local XP_PER_LEVEL_TABLE = {}
 	-- Vanilla
@@ -221,10 +197,6 @@ function Mutation:UltimateLevel()
 
 	-- Mutation.gold_filter = 200
 	Mutation.experience_filter = 300 -- 300% experience
-
-	GameRules:GetGameModeEntity():SetExecuteOrderFilter(Dynamic_Wrap(Mutation, "OrderFilter"), self)
-	-- GameRules:GetGameModeEntity():SetModifyGoldFilter(Dynamic_Wrap(Mutation, "GoldFilter"), self)
-	GameRules:GetGameModeEntity():SetModifyExperienceFilter(Dynamic_Wrap(Mutation, "ExperienceFilter"), self)
 end
 
 -- function Mutation:GoldFilter(keys)
@@ -335,4 +307,69 @@ function Mutation:ForceAssignHeroes()
 			hPlayer:MakeRandomHeroSelection()
 		end
 	end
+end
+
+function Mutation:TugOfWar()
+	local golem
+	-- Random a team for the initial golem spawn
+	if RandomInt(1, 2) == 1 then
+		golem = CreateUnitByName("npc_dota_mutation_golem", MUTATION_LIST_TUG_OF_WAR_START[DOTA_TEAM_GOODGUYS], false, nil, nil, DOTA_TEAM_GOODGUYS)
+		golem.ambient_pfx = ParticleManager:CreateParticle("particles/ambient/tug_of_war_team_radiant.vpcf", PATTACH_ABSORIGIN_FOLLOW, golem)
+		ParticleManager:SetParticleControl(golem.ambient_pfx, 0, golem:GetAbsOrigin())
+		Timers:CreateTimer(0.1, function()
+			golem:MoveToPositionAggressive(MUTATION_LIST_TUG_OF_WAR_TARGET[DOTA_TEAM_GOODGUYS])
+		end)
+	else
+		golem = CreateUnitByName("npc_dota_mutation_golem", MUTATION_LIST_TUG_OF_WAR_START[DOTA_TEAM_BADGUYS], false, nil, nil, DOTA_TEAM_BADGUYS)
+		golem.ambient_pfx = ParticleManager:CreateParticle("particles/ambient/tug_of_war_team_dire.vpcf", PATTACH_ABSORIGIN_FOLLOW, golem)
+		ParticleManager:SetParticleControl(golem.ambient_pfx, 0, golem:GetAbsOrigin())
+		Timers:CreateTimer(0.1, function()
+			golem:MoveToPositionAggressive(MUTATION_LIST_TUG_OF_WAR_TARGET[DOTA_TEAM_BADGUYS])
+		end)
+	end
+
+	-- Initial logic
+	golem:AddNewModifier(golem, nil, "modifier_mutation_tug_of_war_golem", {}):SetStackCount(1)
+	FindClearSpaceForUnit(golem, golem:GetAbsOrigin(), true)
+	golem:SetDeathXP(50)
+	golem:SetMinimumGoldBounty(50)
+	golem:SetMaximumGoldBounty(50)
+end
+
+function Mutation:Minefield()
+	local mines = {
+		"npc_minefield_land_mines",
+		"npc_minefield_land_mines_big_boom",
+		"npc_minefield_stasis_trap",
+	}
+
+	Timers:CreateTimer(function()
+		local units = FindUnitsInRadius(DOTA_TEAM_NEUTRALS, Vector(0, 0, 0), nil, FIND_UNITS_EVERYWHERE, DOTA_UNIT_TARGET_TEAM_FRIENDLY, DOTA_UNIT_TARGET_ALL, DOTA_UNIT_TARGET_FLAG_INVULNERABLE + DOTA_UNIT_TARGET_FLAG_OUT_OF_WORLD, FIND_ANY_ORDER, false)
+		local mine_count = 0
+		local max_mine_count = 75
+
+		for _, unit in pairs(units) do
+			if unit:GetUnitName() == "npc_minefield_land_mines" or unit:GetUnitName() == "npc_minefield_land_mines_big_boom" or unit:GetUnitName() == "npc_minefield_stasis_trap" then
+				if unit:GetUnitName() == "npc_minefield_land_mines" then
+					unit:FindAbilityByName("minefield_land_mines_trigger"):SetLevel(RandomInt(1, 4))
+				elseif unit:GetUnitName() == "npc_minefield_land_mines_big_boom" then
+					unit:FindAbilityByName("minefield_land_mines_trigger"):SetLevel(RandomInt(1, 4))
+				elseif unit:GetUnitName() == "npc_minefield_stasis_trap" then
+					unit:FindAbilityByName("minefield_stasis_trap_trigger"):SetLevel(RandomInt(1, 4))
+				end
+
+				mine_count = mine_count + 1
+			end
+		end
+
+		if mine_count < max_mine_count then
+			for i = 1, 10 do
+				local mine = CreateUnitByName(mines[RandomInt(1, #mines)], RandomVector(10000), true, nil, nil, DOTA_TEAM_NEUTRALS)
+				mine:AddNewModifier(mine, nil, "modifier_invulnerable", {})
+			end
+		end
+
+		--		print("Mine count:", mine_count)
+		return 10.0
+	end)
 end

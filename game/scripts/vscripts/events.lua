@@ -79,12 +79,15 @@ function Mutation:OnGameRulesStateChange(keys)
 				end
 
 				for _, hero in pairs(HeroList:GetAllHeroes()) do
+					local caster = bad_fountain
+
 					if (hero:GetTeamNumber() == 3 and table[random_int][3] == "Red") or (hero:GetTeamNumber() == 2 and table[random_int][3] == "Green") then
 						caster = good_fountain
 					end
 
 					hero:AddNewModifier(caster, caster, "modifier_mutation_" .. table[random_int][1], { duration = table[random_int][4] })
 				end
+
 				counter = counter + 1
 
 				return 60.0
@@ -271,30 +274,9 @@ function Mutation:OnGameRulesStateChange(keys)
 				return 0.5
 			end)
 		elseif MUTATION_LIST["terrain"] == "tug_of_war" then
-			local golem
-			-- Random a team for the initial golem spawn
-			if RandomInt(1, 2) == 1 then
-				golem = CreateUnitByName("npc_dota_mutation_golem", MUTATION_LIST_TUG_OF_WAR_START[DOTA_TEAM_GOODGUYS], false, nil, nil, DOTA_TEAM_GOODGUYS)
-				golem.ambient_pfx = ParticleManager:CreateParticle("particles/ambient/tug_of_war_team_radiant.vpcf", PATTACH_ABSORIGIN_FOLLOW, golem)
-				ParticleManager:SetParticleControl(golem.ambient_pfx, 0, golem:GetAbsOrigin())
-				Timers:CreateTimer(0.1, function()
-					golem:MoveToPositionAggressive(MUTATION_LIST_TUG_OF_WAR_TARGET[DOTA_TEAM_GOODGUYS])
-				end)
-			else
-				golem = CreateUnitByName("npc_dota_mutation_golem", MUTATION_LIST_TUG_OF_WAR_START[DOTA_TEAM_BADGUYS], false, nil, nil, DOTA_TEAM_BADGUYS)
-				golem.ambient_pfx = ParticleManager:CreateParticle("particles/ambient/tug_of_war_team_dire.vpcf", PATTACH_ABSORIGIN_FOLLOW, golem)
-				ParticleManager:SetParticleControl(golem.ambient_pfx, 0, golem:GetAbsOrigin())
-				Timers:CreateTimer(0.1, function()
-					golem:MoveToPositionAggressive(MUTATION_LIST_TUG_OF_WAR_TARGET[DOTA_TEAM_BADGUYS])
-				end)
-			end
-
-			-- Initial logic
-			golem:AddNewModifier(golem, nil, "modifier_mutation_tug_of_war_golem", {}):SetStackCount(1)
-			FindClearSpaceForUnit(golem, golem:GetAbsOrigin(), true)
-			golem:SetDeathXP(50)
-			golem:SetMinimumGoldBounty(50)
-			golem:SetMaximumGoldBounty(50)
+			Mutation:TugOfWar()
+		elseif MUTATION_LIST["terrain"] == "minefield" then
+			Mutation:Minefield()
 		end
 	end
 end
@@ -314,7 +296,7 @@ function Mutation:OnNPCSpawned(keys)
 		if not Mutation:IsEligibleHero(npc) then return end
 
 		if npc.first_spawn == nil then
-			--			print("Mutation: On Hero First Spawn")
+			-- print("Mutation: On Hero First Spawn")
 
 			if MUTATION_LIST["positive"] == "killstreak_power" then
 				npc:AddNewModifier(npc, nil, "modifier_mutation_kill_streak_power", {})
@@ -335,6 +317,7 @@ function Mutation:OnNPCSpawned(keys)
 				npc:AddNewModifier(npc, nil, "modifier_mutation_super_fervor", {})
 			elseif MUTATION_LIST["positive"] == "teammate_resurrection" then
 				npc.reincarnating = false
+				npc:AddAbility("tombstone_channel"):SetLevel(1)
 			end
 
 			if MUTATION_LIST["negative"] == "alien_incubation" then
@@ -482,6 +465,45 @@ function Mutation:OrderFilter(keys)
 	-- Store if a player is buying back
 	if order == DOTA_UNIT_ORDER_BUYBACK then
 		unit.bought_back = true
+	end
+
+	return true
+end
+
+-- Item added to inventory filter
+function Mutation:ItemAddedFilter(keys)
+	-- Typical keys:
+	-- inventory_parent_entindex_const: 852
+	-- item_entindex_const: 1519
+	-- item_parent_entindex_const: -1
+	-- suggested_slot: -1
+	local unit = EntIndexToHScript(keys.inventory_parent_entindex_const)
+	local item = EntIndexToHScript(keys.item_entindex_const)
+	local item_name = 0
+
+	if item:GetName() then
+		item_name = item:GetName()
+	end
+
+	if item.airdrop then
+		local overthrow_item_drop =
+		{
+			hero_id = unit:GetClassname(),
+			dropped_item = item:GetName()
+		}
+		CustomGameEventManager:Send_ServerToAllClients("overthrow_item_drop", overthrow_item_drop)
+		EmitGlobalSound("powerup_04")
+	end
+
+	-- Respawning a teammate channel starts here
+	if item_name == "item_tombstone" and unit:IsRealHero() and unit:GetTeamNumber() == item:GetTeamNumber() then
+		local channel_ability = unit:FindAbilityByName("tombstone_channel")
+
+		if channel_ability then
+			unit:CastAbilityImmediately(channel_ability, unit:GetPlayerID())
+		end
+
+		return false
 	end
 
 	return true

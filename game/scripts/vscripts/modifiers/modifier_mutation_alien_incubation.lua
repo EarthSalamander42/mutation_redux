@@ -15,16 +15,16 @@ end
 function modifier_mutation_alien_incubation:OnCreated()
 	if not IsServer() then return end
 
-	print("Alien Incubation Mutation Loaded for " .. self:GetParent():GetUnitName() .. " with " .. self:GetParent():GetMaxHealth() .. " health.")
+	-- print("Alien Incubation Mutation Loaded for " .. self:GetParent():GetUnitName() .. " with " .. self:GetParent():GetMaxHealth() .. " health.")
 end
 
 function modifier_mutation_alien_incubation:OnDeath(keys)
 	if not IsServer() then return end
 
 	if keys.unit == self:GetParent() then
-		print("Alien Incubation")
+		-- print("Alien Incubation")
 		if keys.unit:GetMaxHealth() > 2000 and not (keys.unit:GetUnitName() == "npc_dota_mutation_spiderling_super_big") then
-			print("Alien Incubation: Super Big Spider")
+			-- print("Alien Incubation: Super Big Spider")
 			local spider_count = RandomInt(1, math.floor(keys.unit:GetMaxHealth() / 2000))
 
 			for i = 1, spider_count do
@@ -33,7 +33,7 @@ function modifier_mutation_alien_incubation:OnDeath(keys)
 				FindClearSpaceForUnit(spider, spider:GetAbsOrigin(), true)
 			end
 		elseif keys.unit:GetMaxHealth() > 1000 and not (keys.unit:GetUnitName() == "npc_dota_mutation_spiderling_big") then
-			print("Alien Incubation: Big Spider")
+			-- print("Alien Incubation: Big Spider")
 			local spider_count = RandomInt(1, 2)
 
 			for i = 1, spider_count do
@@ -42,7 +42,7 @@ function modifier_mutation_alien_incubation:OnDeath(keys)
 				FindClearSpaceForUnit(spider, spider:GetAbsOrigin(), true)
 			end
 		elseif keys.unit:GetMaxHealth() > 600 and not (keys.unit:GetUnitName() == "npc_dota_mutation_spiderling") then
-			print("Alien Incubation: Spider")
+			-- print("Alien Incubation: Spider")
 			local spider_count = RandomInt(1, 2)
 
 			for i = 1, spider_count do
@@ -51,7 +51,7 @@ function modifier_mutation_alien_incubation:OnDeath(keys)
 				FindClearSpaceForUnit(spider, spider:GetAbsOrigin(), true)
 			end
 		elseif keys.unit:GetMaxHealth() > 200 and not (keys.unit:GetUnitName() == "npc_dota_mutation_spiderite") then
-			print("Alien Incubation: Spiderite")
+			-- print("Alien Incubation: Spiderite")
 			local spider_count = RandomInt(2, 3)
 
 			for i = 1, spider_count do
@@ -60,7 +60,7 @@ function modifier_mutation_alien_incubation:OnDeath(keys)
 				FindClearSpaceForUnit(spider, spider:GetAbsOrigin(), true)
 			end
 		else
-			print("Alien Incubation: Not enough health to spawn spiders.")
+			-- print("Alien Incubation: Not enough health to spawn spiders.")
 		end
 	end
 end
