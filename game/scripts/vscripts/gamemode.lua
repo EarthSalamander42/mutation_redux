@@ -209,7 +209,7 @@ function Mutation:UltimateLevel()
 		local j = 31
 		Timers:CreateTimer(function()
 			if j >= ULTIMATE_LEVEL then return end
-			print(j)
+			-- print(j)
 			for i = j, j + 2 do
 				XP_PER_LEVEL_TABLE[i] = XP_PER_LEVEL_TABLE[i - 1] + 2500
 				GameRules:GetGameModeEntity():SetCustomXPRequiredToReachNextLevel(XP_PER_LEVEL_TABLE)
@@ -220,8 +220,9 @@ function Mutation:UltimateLevel()
 	end
 
 	-- Mutation.gold_filter = 200
-	Mutation.experience_filter = 200 -- 200% experience
+	Mutation.experience_filter = 300 -- 300% experience
 
+	GameRules:GetGameModeEntity():SetExecuteOrderFilter(Dynamic_Wrap(Mutation, "OrderFilter"), self)
 	-- GameRules:GetGameModeEntity():SetModifyGoldFilter(Dynamic_Wrap(Mutation, "GoldFilter"), self)
 	GameRules:GetGameModeEntity():SetModifyExperienceFilter(Dynamic_Wrap(Mutation, "ExperienceFilter"), self)
 end
@@ -246,7 +247,11 @@ function Mutation:ExperienceFilter(keys)
 	-- keys["experience"]
 	-- keys["reason_const"]
 
-	keys.experience = keys.experience * Mutation.experience_filter / 100
+	if MUTATION_LIST["positive"] == "ultimate_level" then
+		if keys.experience > 0 then
+			keys.experience = keys.experience * Mutation.experience_filter / 100
+		end
+	end
 
 	return true
 end

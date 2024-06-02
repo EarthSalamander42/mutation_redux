@@ -71,7 +71,7 @@
 	"mutation_super_blink_description"				"All players start with a Blink Dagger that is not disabled on damage."
 
 	"mutation_ultimate_level"						"Ultimate Level"
-	"mutation_ultimate_level_description"			"Max hero level increased to 100."
+	"mutation_ultimate_level_description"			"Max hero level increased to 100. Experience rate increased to 300%."
 
 	// Negative
 	"mutation_death_explosion"					"Death Explosion"

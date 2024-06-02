@@ -347,6 +347,8 @@ function Mutation:OnNPCSpawned(keys)
 				npc:AddNewModifier(npc, nil, "modifier_mutation_ants", {})
 			elseif MUTATION_LIST["negative"] == "monkey_business" then
 				npc:AddNewModifier(npc, nil, "modifier_mutation_monkey_business", {})
+			elseif MUTATION_LIST["negative"] == "stay_frosty" then
+				npc:AddNewModifier(npc, nil, "modifier_mutation_stay_frosty", {})
 			end
 
 			npc.first_spawn = true
@@ -452,11 +454,37 @@ function Mutation:OnHeroDeath(hero)
 	end
 
 	-- respawn time is wonky when level is higher than 30, so we need to fix it
-	if MUTATION_LIST["positive"] == "ultimate_level" then
-		if not hero:IsReincarnating() then
-			hero:SetTimeUntilRespawn((hero:GetLevel() * 2) + 120.0)
+	if MUTATION_LIST["positive"] == "ultimate_level" or IsInToolsMode() then
+		if not hero:IsReincarnating() and hero:GetLevel() > 30 then
+			local respawn_time = 100.0 + (hero:GetLevel() - 30) * 1
+			print(hero:GetUnitName() .. " respawn time: " .. respawn_time)
+
+			if hero.bought_back == true then
+				print("Bought back, adding 25 seconds")
+				respawn_time = respawn_time + 25
+			end
+
+			print("Final respawn time: " .. respawn_time)
+			hero:SetTimeUntilRespawn(respawn_time)
 		end
 	end
+
+	-- This is outside the if statement in case the hero dies at level 30 or lower and then levels up after death
+	if hero.bought_back == true then
+		hero.bought_back = false
+	end
+end
+
+function Mutation:OrderFilter(keys)
+	local order = keys.order_type
+	local unit = EntIndexToHScript(keys.units["0"])
+
+	-- Store if a player is buying back
+	if order == DOTA_UNIT_ORDER_BUYBACK then
+		unit.bought_back = true
+	end
+
+	return true
 end
 
 --[[

@@ -4,6 +4,13 @@ require('internal/util')
 require('gamemode')
 
 function Precache(context)
+	-- Call Down
+	PrecacheResource("particle", "particles/units/heroes/hero_gyrocopter/gyro_calldown_marker.vpcf", context)
+	PrecacheResource("particle", "particles/units/heroes/hero_gyrocopter/gyro_calldown_first.vpcf", context)
+	PrecacheResource("particle", "particles/units/heroes/hero_gyrocopter/gyro_calldown_second.vpcf", context)
+	PrecacheResource("particle", "particles/units/heroes/hero_gyrocopter/gyro_calldown_explosion.vpcf", context)
+	PrecacheResource("particle", "particles/units/heroes/hero_gyrocopter/gyro_calldown_explosion_second.vpcf", context)
+
 	-- Death Explosion
 	PrecacheResource("particle", "particles/units/heroes/hero_pugna/pugna_netherblast_pre.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_pugna/pugna_netherblast.vpcf", context)

@@ -104,7 +104,7 @@ function modifier_thinker_call_down:OnDestroy()
 		EmitSoundOnLocationWithCaster(self.pos, "Hero_Gyrocopter.CallDown.Damage", self:GetCaster())
 
 		-- calc damage for first explosion
-		local call_down_damage = math.ceil(50 * (GameRules:GetGameTime() / 60))
+		local call_down_damage = math.ceil(25 * (GameRules:GetGameTime() / 60))
 		local units = FindUnitsInRadius(1,
 			self.pos,
 			nil,
